@@ -1,16 +1,43 @@
-import { Container } from "../di/container";
-import { getMetadata } from "../metadata";
+import "reflect-metadata"
+import "dotenv/config"
+import http from "http";
 import { Router } from "./http-router";
-import http, { IncomingMessage, ServerResponse } from "http";
+import { IInterceptor } from "./interfaces/interceptor.interface";
+import { IExceptionFilter } from "./interfaces/exception-filter.interface";
+import { printBanner } from "@core/banner";
+import { getMetadata } from "@core/metadata";
+import { Container } from "@core/di/container";
+
 
 export class HttpServer {
 
   private port: number;
   private router: Router;
+  private globalInterceptor?: IInterceptor;
+  private globalExceptionFilter?: IExceptionFilter;
 
   constructor(port = 3000) {
     this.port = port;
     this.router = new Router();
+    printBanner(this.port)
+  }
+
+  /**
+   * Set a global interceptor that will be applied to all routes
+   * @param interceptorClass - The interceptor class that implements IInterceptor
+   */
+  setGlobalInterceptor(interceptorClass: new () => IInterceptor) {
+    this.globalInterceptor = new interceptorClass();
+    this.router.setGlobalInterceptor(this.globalInterceptor);
+  }
+
+  /**
+   * Set a global exception filter that will handle all uncaught exceptions
+   * @param filterClass - The filter class that implements IExceptionFilter
+   */
+  setGlobalExceptionFilter(filterClass: new () => IExceptionFilter) {
+    this.globalExceptionFilter = new filterClass();
+    this.router.setGlobalExceptionFilter(this.globalExceptionFilter);
   }
 
   registerController(controllerInstance: Function) {
@@ -20,15 +47,13 @@ export class HttpServer {
   async listen() {
     const server = http.createServer(async (request: any, response: any) => {
       const httpResponse = await this.router.handle(request, response);
-      if (!response) {
+      if (!httpResponse) {
         response.writeHead(404, { "Content-Type": "application/json" });
         response.end(JSON.stringify({ error: "Not Found" }));
       }
     });
 
-    server.listen(this.port, () =>
-      console.log(`🚀 Server running at http://localhost:${this.port}`)
-    );
+    server.listen(this.port);
   }
 
   registerModule(moduleClass: any) {

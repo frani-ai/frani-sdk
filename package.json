@@ -4,31 +4,39 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsup src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "build": "echo \"Clear folder dist\" && rm -rf ./dist && tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
     "start:prod": "node ./dist/index.js",
-    "start:dev": "tsx watch ./src/index.ts",
-    "start:debug": "tsx watch ./src/index.ts",
-    "type-check": "tsc --noEmit"
+    "start:dev": "ts-node-dev --respawn -r ./register.js src/index.ts",
+    "start:debug": "ts-node-dev --respawn --inspect -r ./register.js src/index.ts",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky"
   },
   "keywords": [],
-  "author": "",
+  "author": "Diogo Franco <diogo.franco85@gmail.com>",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@swc/core": "^1.15.11",
-    "@types/express": "^5.0.6",
-    "@types/helmet": "^0.0.48",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.2.0",
-    "eslint": "^8.57.1",
+    "eslint": "^10.0.0",
     "eslint-config-airbnb": "^19.0.4",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.8.1",
-    "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.16",
+    "typescript-paths": "^1.5.1"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "typescript": "^5.9.3"
   }
 }

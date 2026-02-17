@@ -2,11 +2,9 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "Preserve",
+    "module": "CommonJS",
     "target": "es2020",
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -23,13 +21,16 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowJs": true,
-    "esModuleInterop": true
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    // "declarationDir": "./@types",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@modules/*": ["./src/modules"]
+    }
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "examples"]
 }
