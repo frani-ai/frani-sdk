@@ -11,6 +11,8 @@ SDK para desenvolvimento de aplicações Node.js com TypeScript, incluindo siste
 - ✅ **Interceptors**: Suporte a interceptors globais e por rota
 - ✅ **Exception Filters**: Tratamento customizado de exceções
 - ✅ **Logger**: Sistema de logging estruturado
+- ✅ **Autenticação**: JWT, OAuth 2.0 e OpenID Connect
+- ✅ **Guards**: Proteção de rotas com autenticação e autorização
 - ✅ **Testes Unitários**: Cobertura completa com Jest
 
 ## 📦 Instalação

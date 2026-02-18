@@ -1,10 +1,30 @@
-import { HttpServer } from "@core/http";
-import { AppModule } from "./modules/app.module";
+// Core exports
+export * from "./core";
 
-async function main() {
-  const app = new HttpServer(3000);
-  app.registerModule(AppModule);
-  app.listen();
-}
+// Modules exports
+export * from "./modules";
 
-main();
+// Re-export commonly used items for convenience
+export { HttpServer } from "./core/http/http-server";
+export { Router } from "./core/http/http-router";
+export {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  HttpStatus,
+  Catch,
+  Interceptor,
+} from "./core/http/http-decorator";
+export { Injectable, Module, Inject } from "./core/di/container-decorator";
+export { Container, DependencyContainer } from "./core/di/container";
+export { Logger } from "./modules/logger/logger.service";
+export {
+  AuthService,
+  JwtStrategy,
+  OAuthStrategy,
+  OpenIDStrategy,
+  JwtAuthGuard,
+  RolesGuard,
+} from "./modules/auth";
