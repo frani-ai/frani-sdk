@@ -69,3 +69,21 @@ export interface IAuthGuard {
    */
   canActivate(context: any): Promise<boolean>;
 }
+
+/**
+ * Callback chamado após OAuth retornar dados do provedor.
+ * O backend resolve/encontra o usuário no seu sistema e retorna IAuthUser.
+ * O SDK gera o token em cima desse usuário.
+ */
+export type OAuthUserResolver = (
+  providerUser: IAuthUser,
+) => Promise<IAuthUser | null>;
+
+/**
+ * Callback chamado após OpenID retornar dados do provedor.
+ * O backend resolve/encontra o usuário no seu sistema e retorna IAuthUser.
+ * O SDK gera o token em cima desse usuário.
+ */
+export type OpenIDUserResolver = (
+  providerUser: IAuthUser,
+) => Promise<IAuthUser | null>;

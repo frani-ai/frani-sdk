@@ -67,6 +67,17 @@ async function main() {
 main();
 ```
 
+## 🎯 Visão geral: SDK abstrato
+
+O módulo de auth do SDK **não faz busca de usuário**. Ele cuida de:
+
+- **Gerar e renovar tokens** – você valida credenciais no seu backend e chama `authService.generateTokenPair(user)`.
+- **Validar token** – `GET /auth/validate` e `authService.validateToken(token)`.
+- **Refresh** – `POST /auth/refresh` e `authService.refreshAccessToken(refreshToken)`.
+- **OAuth/OpenID** – rotas de authorize e callback; no callback você resolve o usuário (ex.: find/create no seu banco) via `onOAuthCallback` / `onOpenIDCallback` e o SDK gera o token.
+
+**Login com email/senha** fica no seu backend: você busca o usuário, compara senha (ex.: com `authService.comparePassword`) e, se ok, chama `authService.generateTokenPair(user)` e devolve os tokens.
+
 ## 🔑 Estratégias de Autenticação
 
 ### JWT
@@ -217,27 +228,42 @@ async adminOnly(context: any) {
 
 ## 📖 Uso Básico
 
-### 1. Login com Credenciais
+### 1. Login no seu backend (email/senha)
+
+O SDK **não expõe** POST /auth/login. Você implementa a rota no seu backend, busca o usuário, valida a senha e gera o token:
 
 ```typescript
-// POST /auth/login
-{
-  "email": "user@example.com",
-  "password": "senha123"
-}
+import { Controller, Post } from "@core/http";
+import { AuthService } from "@modules/auth";
+import { BadRequestException, UnauthorizedException } from "@core/http";
 
-// Resposta
-{
-  "success": true,
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-    "tokenType": "Bearer"
+@Controller("users")
+export class UsersController {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userRepository: UserRepository, // seu repositório
+  ) {}
+
+  @Post("/login")
+  async login(context: HttpContext) {
+    const { email, password } = context.body;
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) throw new UnauthorizedException("Credenciais inválidas");
+
+    const valid = await this.authService.comparePassword(
+      password,
+      user.passwordHash,
+    );
+    if (!valid) throw new UnauthorizedException("Credenciais inválidas");
+
+    const { passwordHash: _, ...safeUser } = user;
+    const tokens = this.authService.generateTokenPair(safeUser);
+    return { success: true, data: tokens };
   }
 }
 ```
 
-### 2. Validar Token
+### 2. Validar Token (SDK)
 
 ```typescript
 // GET /auth/validate
@@ -257,7 +283,7 @@ async adminOnly(context: any) {
 }
 ```
 
-### 3. Atualizar Token
+### 3. Atualizar Token (SDK)
 
 ```typescript
 // POST /auth/refresh
@@ -275,7 +301,32 @@ async adminOnly(context: any) {
 }
 ```
 
-### 4. OAuth Flow
+### 4. OAuth com callback no seu backend
+
+No callback OAuth, o SDK troca o `code` pelo usuário do provedor. Se você passar `onOAuthCallback`, o SDK chama essa função para você **encontrar ou criar** o usuário no seu sistema; o token é gerado em cima do usuário que você retornar:
+
+```typescript
+AuthModule.forRoot({
+  strategies: ["jwt", "oauth"],
+  jwt: { secret: process.env.JWT_SECRET!, expiresIn: "1h" },
+  oauth: {
+    /* ... */
+  },
+  onOAuthCallback: async (providerUser) => {
+    let user = await userRepository.findByEmail(providerUser.email);
+    if (!user) {
+      user = await userRepository.create({
+        email: providerUser.email,
+        name: providerUser.username ?? providerUser.email,
+        externalId: String(providerUser.id),
+      });
+    }
+    return { id: user.id, email: user.email, roles: user.roles };
+  },
+});
+```
+
+### 5. OAuth Flow (rotas do SDK)
 
 ```typescript
 // 1. Obter URL de autorização
@@ -307,7 +358,7 @@ async adminOnly(context: any) {
 }
 ```
 
-### 5. OpenID Connect Flow
+### 6. OpenID Connect Flow
 
 ```typescript
 // 1. Obter URL de autorização

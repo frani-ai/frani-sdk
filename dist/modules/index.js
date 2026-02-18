@@ -34,6 +34,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./logger/logger.service"), exports);
 __exportStar(require("./logger/logger.module"), exports);
 __exportStar(require("./logger/interfaces/logger"), exports);
+// Config
+__exportStar(require("./config"), exports);
 // Auth
 __exportStar(require("./auth"), exports);
 //# sourceMappingURL=index.js.map

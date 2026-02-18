@@ -32,6 +32,7 @@ var __importDefault =
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const container_decorator_1 = require("../../core/di/container-decorator");
+const container_1 = require("../../core/di/container");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const oauth_strategy_1 = require("./strategies/oauth.strategy");
 const openid_strategy_1 = require("./strategies/openid.strategy");
@@ -39,16 +40,37 @@ const http_1 = require("../../core/http");
 const logger_service_1 = require("../logger/logger.service");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 let AuthService = class AuthService {
-  constructor(jwtStrategy, oauthStrategy, openidStrategy, logger) {
-    this.jwtStrategy = jwtStrategy;
-    this.oauthStrategy = oauthStrategy;
-    this.openidStrategy = openidStrategy;
+  constructor(logger) {
     this.logger = logger;
     this.strategies = new Map();
-    // Registrar estratégias disponíveis
-    this.registerStrategy(jwtStrategy);
-    this.registerStrategy(oauthStrategy);
-    this.registerStrategy(openidStrategy);
+    // Registrar estratégias disponíveis dinamicamente
+    this.loadStrategies();
+  }
+  /**
+   * Carrega estratégias disponíveis do Container
+   */
+  loadStrategies() {
+    // Verificar quais estratégias foram registradas no Container
+    const containerInstances = container_1.Container.instances;
+    // Carregar apenas estratégias que foram explicitamente registradas
+    if (containerInstances.has(jwt_strategy_1.JwtStrategy)) {
+      const jwtStrategy = container_1.Container.resolve(
+        jwt_strategy_1.JwtStrategy,
+      );
+      this.registerStrategy(jwtStrategy);
+    }
+    if (containerInstances.has(oauth_strategy_1.OAuthStrategy)) {
+      const oauthStrategy = container_1.Container.resolve(
+        oauth_strategy_1.OAuthStrategy,
+      );
+      this.registerStrategy(oauthStrategy);
+    }
+    if (containerInstances.has(openid_strategy_1.OpenIDStrategy)) {
+      const openidStrategy = container_1.Container.resolve(
+        openid_strategy_1.OpenIDStrategy,
+      );
+      this.registerStrategy(openidStrategy);
+    }
   }
   /**
    * Registra uma nova estratégia de autenticação
@@ -67,57 +89,40 @@ let AuthService = class AuthService {
     return this.strategies.get(name);
   }
   /**
-   * Autentica um usuário usando a estratégia JWT
-   * @param email - Email do usuário
-   * @param password - Senha do usuário
-   * @param userValidator - Função para validar credenciais no banco de dados
-   * @returns Token de acesso e refresh token
+   * Gera par de tokens (access + refresh) para um usuário.
+   * Use no seu backend após validar credenciais (login) ou após OAuth/OpenID.
+   * @param user - Usuário (sem senha)
+   * @returns accessToken, refreshToken e tokenType
    */
-  async loginWithCredentials(email, password, userValidator) {
-    try {
-      // Buscar usuário no banco de dados
-      const user = await userValidator(email);
-      if (!user) {
-        throw new http_1.UnauthorizedException("Credenciais inválidas");
-      }
-      // Verificar senha
-      const isPasswordValid = await this.comparePassword(
-        password,
-        user.password,
+  generateTokenPair(user) {
+    const jwtStrategy = this.getStrategy("jwt");
+    if (!jwtStrategy) {
+      throw new http_1.BadRequestException(
+        "Estratégia JWT não está habilitada",
       );
-      if (!isPasswordValid) {
-        throw new http_1.UnauthorizedException("Credenciais inválidas");
-      }
-      // Remover senha do objeto do usuário
-      const { password: _, ...userWithoutPassword } = user;
-      // Gerar tokens
-      const tokens = this.jwtStrategy.generateTokenPair(userWithoutPassword);
-      this.logger.log("Usuário autenticado com sucesso", { userId: user.id });
-      return {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        tokenType: "Bearer",
-      };
-    } catch (error) {
-      this.logger.error("Falha na autenticação", {
-        error: error.message,
-      });
-      throw error;
     }
+    const tokens = jwtStrategy.generateTokenPair(user);
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      tokenType: "Bearer",
+    };
   }
   /**
-   * Autentica um usuário usando OAuth
+   * Obtém usuário do provedor OAuth (troca code por token e user info).
+   * O backend usa onOAuthCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização OAuth
    * @param state - Estado para CSRF protection
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  async loginWithOAuth(code, state) {
+  async getOAuthUserFromCode(code, state) {
     try {
       const credentials = { code };
       if (state !== undefined) {
         credentials.state = state;
       }
-      const user = await this.oauthStrategy.validate(credentials);
+      const oauthStrategy = this.getStrategy("oauth");
+      const user = await oauthStrategy.validate(credentials);
       if (!user) {
         throw new http_1.UnauthorizedException("Falha na autenticação OAuth");
       }
@@ -131,13 +136,14 @@ let AuthService = class AuthService {
     }
   }
   /**
-   * Autentica um usuário usando OpenID Connect
+   * Obtém usuário do provedor OpenID (troca code por token e user info).
+   * O backend usa onOpenIDCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização
    * @param state - Estado para CSRF protection
    * @param nonce - Nonce para validação do ID token
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  async loginWithOpenID(code, state, nonce) {
+  async getOpenIDUserFromCode(code, state, nonce) {
     try {
       const credentials = {
         code,
@@ -148,7 +154,8 @@ let AuthService = class AuthService {
       if (nonce !== undefined) {
         credentials.nonce = nonce;
       }
-      const user = await this.openidStrategy.validate(credentials);
+      const openidStrategy = this.getStrategy("openid");
+      const user = await openidStrategy.validate(credentials);
       if (!user) {
         throw new http_1.UnauthorizedException(
           "Falha na autenticação OpenID Connect",
@@ -171,7 +178,8 @@ let AuthService = class AuthService {
    * @returns Dados do usuário ou null se inválido
    */
   async validateToken(token) {
-    return this.jwtStrategy.validate({ token });
+    const jwtStrategy = this.getStrategy("jwt");
+    return jwtStrategy.validate({ token });
   }
   /**
    * Atualiza o token de acesso usando um refresh token
@@ -180,11 +188,12 @@ let AuthService = class AuthService {
    */
   async refreshAccessToken(refreshToken) {
     try {
-      const user = await this.jwtStrategy.validate({ token: refreshToken });
+      const jwtStrategy = this.getStrategy("jwt");
+      const user = await jwtStrategy.validate({ token: refreshToken });
       if (!user) {
         throw new http_1.UnauthorizedException("Refresh token inválido");
       }
-      const accessToken = this.jwtStrategy.sign(user);
+      const accessToken = jwtStrategy.sign(user);
       this.logger.log("Token atualizado com sucesso", { userId: user.id });
       return {
         accessToken,
@@ -221,7 +230,8 @@ let AuthService = class AuthService {
    * @returns URL de autorização
    */
   getOAuthAuthorizationUrl(state) {
-    return this.oauthStrategy.getAuthorizationUrl(state);
+    const oauthStrategy = this.getStrategy("oauth");
+    return oauthStrategy.getAuthorizationUrl(state);
   }
   /**
    * Gera a URL de autorização OpenID Connect
@@ -230,7 +240,8 @@ let AuthService = class AuthService {
    * @returns URL de autorização
    */
   getOpenIDAuthorizationUrl(state, nonce) {
-    return this.openidStrategy.getAuthorizationUrl(state, nonce);
+    const openidStrategy = this.getStrategy("openid");
+    return openidStrategy.getAuthorizationUrl(state, nonce);
   }
   /**
    * Verifica se um token JWT está expirado
@@ -238,19 +249,15 @@ let AuthService = class AuthService {
    * @returns true se expirado, false caso contrário
    */
   isTokenExpired(token) {
-    return this.jwtStrategy.isExpired(token);
+    const jwtStrategy = this.getStrategy("jwt");
+    return jwtStrategy.isExpired(token);
   }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate(
   [
     (0, container_decorator_1.Injectable)(),
-    __metadata("design:paramtypes", [
-      jwt_strategy_1.JwtStrategy,
-      oauth_strategy_1.OAuthStrategy,
-      openid_strategy_1.OpenIDStrategy,
-      logger_service_1.Logger,
-    ]),
+    __metadata("design:paramtypes", [logger_service_1.Logger]),
   ],
   AuthService,
 );

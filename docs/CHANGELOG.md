@@ -2,6 +2,63 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [Unreleased]
+
+### ✨ Adicionado
+
+#### ConfigModule - Sistema de Configuração
+
+- **ConfigModule**: Sistema completo de gerenciamento de configurações
+  - `ConfigService` com métodos tipados:
+    - `get<T>(key, defaultValue)` - Obter valor com tipo genérico
+    - `getString(key, defaultValue)` - Obter string
+    - `getNumber(key, defaultValue)` - Obter número
+    - `getBoolean(key, defaultValue)` - Obter boolean
+    - `getArray(key, defaultValue)` - Obter array
+  - Suporte a notação de ponto para valores aninhados (`database.host`)
+  - Carregamento automático de arquivos `.env`
+  - Configurações customizadas via `load` functions
+  - Similar ao ConfigModule do NestJS
+
+#### Módulos Dinâmicos
+
+- **forRoot()**: Configuração estática de módulos
+  ```typescript
+  AuthModule.forRoot({ jwt: { secret: "..." } });
+  ```
+- **forRootAsync()**: Configuração assíncrona com factories
+  ```typescript
+  AuthModule.forRootAsync({
+    useFactory: (config) => ({ jwt: { secret: config.get("JWT_SECRET") } }),
+  });
+  ```
+- `AuthModule` agora suporta configuração dinâmica via `ConfigService`
+
+#### Documentação
+
+- `docs/CONFIG.md` - Documentação completa do ConfigModule
+- `examples/config-auth-example.ts` - Exemplos práticos de uso
+- Seção de ConfigModule adicionada ao README principal
+
+### 🔄 Modificado
+
+- `AuthModule` refatorado para suportar configuração dinâmica
+- Exportações centralizadas em `src/index.ts` incluem `ConfigModule` e `ConfigService`
+- `src/modules/index.ts` agora exporta o ConfigModule
+- README atualizado com exemplos de uso do ConfigModule
+
+### 📦 Dependências
+
+```json
+{
+  "dependencies": {
+    "dotenv": "^16.x"
+  }
+}
+```
+
+---
+
 ## [1.0.0] - 2026-02-17
 
 ### ✨ Adicionado

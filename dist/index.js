@@ -36,6 +36,9 @@ exports.RolesGuard =
   exports.OAuthStrategy =
   exports.JwtStrategy =
   exports.AuthService =
+  exports.AuthModule =
+  exports.ConfigService =
+  exports.ConfigModule =
   exports.Logger =
   exports.DependencyContainer =
   exports.Container =
@@ -160,7 +163,26 @@ Object.defineProperty(exports, "Logger", {
     return logger_service_1.Logger;
   },
 });
+var config_1 = require("./modules/config");
+Object.defineProperty(exports, "ConfigModule", {
+  enumerable: true,
+  get: function () {
+    return config_1.ConfigModule;
+  },
+});
+Object.defineProperty(exports, "ConfigService", {
+  enumerable: true,
+  get: function () {
+    return config_1.ConfigService;
+  },
+});
 var auth_1 = require("./modules/auth");
+Object.defineProperty(exports, "AuthModule", {
+  enumerable: true,
+  get: function () {
+    return auth_1.AuthModule;
+  },
+});
 Object.defineProperty(exports, "AuthService", {
   enumerable: true,
   get: function () {

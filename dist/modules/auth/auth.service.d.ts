@@ -1,6 +1,3 @@
-import { JwtStrategy } from "./strategies/jwt.strategy";
-import { OAuthStrategy } from "./strategies/oauth.strategy";
-import { OpenIDStrategy } from "./strategies/openid.strategy";
 import {
   IAuthUser,
   ITokenResponse,
@@ -8,17 +5,13 @@ import {
 } from "./interfaces/auth.interface";
 import { Logger } from "../logger/logger.service";
 export declare class AuthService {
-  private readonly jwtStrategy;
-  private readonly oauthStrategy;
-  private readonly openidStrategy;
   private readonly logger;
   private strategies;
-  constructor(
-    jwtStrategy: JwtStrategy,
-    oauthStrategy: OAuthStrategy,
-    openidStrategy: OpenIDStrategy,
-    logger: Logger,
-  );
+  constructor(logger: Logger);
+  /**
+   * Carrega estratégias disponíveis do Container
+   */
+  private loadStrategies;
   /**
    * Registra uma nova estratégia de autenticação
    * @param strategy - Estratégia a ser registrada
@@ -31,36 +24,29 @@ export declare class AuthService {
    */
   getStrategy(name: string): IAuthStrategy | undefined;
   /**
-   * Autentica um usuário usando a estratégia JWT
-   * @param email - Email do usuário
-   * @param password - Senha do usuário
-   * @param userValidator - Função para validar credenciais no banco de dados
-   * @returns Token de acesso e refresh token
+   * Gera par de tokens (access + refresh) para um usuário.
+   * Use no seu backend após validar credenciais (login) ou após OAuth/OpenID.
+   * @param user - Usuário (sem senha)
+   * @returns accessToken, refreshToken e tokenType
    */
-  loginWithCredentials(
-    email: string,
-    password: string,
-    userValidator: (email: string) => Promise<{
-      id: string | number;
-      password: string;
-      [key: string]: any;
-    } | null>,
-  ): Promise<ITokenResponse>;
+  generateTokenPair(user: IAuthUser): ITokenResponse;
   /**
-   * Autentica um usuário usando OAuth
+   * Obtém usuário do provedor OAuth (troca code por token e user info).
+   * O backend usa onOAuthCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização OAuth
    * @param state - Estado para CSRF protection
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  loginWithOAuth(code: string, state?: string): Promise<IAuthUser>;
+  getOAuthUserFromCode(code: string, state?: string): Promise<IAuthUser>;
   /**
-   * Autentica um usuário usando OpenID Connect
+   * Obtém usuário do provedor OpenID (troca code por token e user info).
+   * O backend usa onOpenIDCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização
    * @param state - Estado para CSRF protection
    * @param nonce - Nonce para validação do ID token
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  loginWithOpenID(
+  getOpenIDUserFromCode(
     code: string,
     state?: string,
     nonce?: string,

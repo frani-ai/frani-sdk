@@ -1,4 +1,5 @@
 import { Injectable } from "@core/di/container-decorator";
+import { Container } from "@core/di/container";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { OAuthStrategy } from "./strategies/oauth.strategy";
 import { OpenIDStrategy } from "./strategies/openid.strategy";
@@ -15,16 +16,33 @@ import bcrypt from "bcrypt";
 export class AuthService {
   private strategies: Map<string, IAuthStrategy> = new Map();
 
-  constructor(
-    private readonly jwtStrategy: JwtStrategy,
-    private readonly oauthStrategy: OAuthStrategy,
-    private readonly openidStrategy: OpenIDStrategy,
-    private readonly logger: Logger,
-  ) {
-    // Registrar estratégias disponíveis
-    this.registerStrategy(jwtStrategy);
-    this.registerStrategy(oauthStrategy);
-    this.registerStrategy(openidStrategy);
+  constructor(private readonly logger: Logger) {
+    // Registrar estratégias disponíveis dinamicamente
+    this.loadStrategies();
+  }
+
+  /**
+   * Carrega estratégias disponíveis do Container
+   */
+  private loadStrategies(): void {
+    // Verificar quais estratégias foram registradas no Container
+    const containerInstances = (Container as any).instances;
+
+    // Carregar apenas estratégias que foram explicitamente registradas
+    if (containerInstances.has(JwtStrategy)) {
+      const jwtStrategy = Container.resolve(JwtStrategy);
+      this.registerStrategy(jwtStrategy);
+    }
+
+    if (containerInstances.has(OAuthStrategy)) {
+      const oauthStrategy = Container.resolve(OAuthStrategy);
+      this.registerStrategy(oauthStrategy);
+    }
+
+    if (containerInstances.has(OpenIDStrategy)) {
+      const openidStrategy = Container.resolve(OpenIDStrategy);
+      this.registerStrategy(openidStrategy);
+    }
   }
 
   /**
@@ -46,78 +64,40 @@ export class AuthService {
   }
 
   /**
-   * Autentica um usuário usando a estratégia JWT
-   * @param email - Email do usuário
-   * @param password - Senha do usuário
-   * @param userValidator - Função para validar credenciais no banco de dados
-   * @returns Token de acesso e refresh token
+   * Gera par de tokens (access + refresh) para um usuário.
+   * Use no seu backend após validar credenciais (login) ou após OAuth/OpenID.
+   * @param user - Usuário (sem senha)
+   * @returns accessToken, refreshToken e tokenType
    */
-  async loginWithCredentials(
-    email: string,
-    password: string,
-    userValidator: (
-      email: string,
-    ) => Promise<{
-      id: string | number;
-      password: string;
-      [key: string]: any;
-    } | null>,
-  ): Promise<ITokenResponse> {
-    try {
-      // Buscar usuário no banco de dados
-      const user = await userValidator(email);
-
-      if (!user) {
-        throw new UnauthorizedException("Credenciais inválidas");
-      }
-
-      // Verificar senha
-      const isPasswordValid = await this.comparePassword(
-        password,
-        user.password,
-      );
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException("Credenciais inválidas");
-      }
-
-      // Remover senha do objeto do usuário
-      const { password: _, ...userWithoutPassword } = user;
-
-      // Gerar tokens
-      const tokens = this.jwtStrategy.generateTokenPair(
-        userWithoutPassword as IAuthUser,
-      );
-
-      this.logger.log("Usuário autenticado com sucesso", { userId: user.id });
-
-      return {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        tokenType: "Bearer",
-      };
-    } catch (error) {
-      this.logger.error("Falha na autenticação", {
-        error: (error as Error).message,
-      });
-      throw error;
+  generateTokenPair(user: IAuthUser): ITokenResponse {
+    const jwtStrategy = this.getStrategy("jwt") as JwtStrategy;
+    if (!jwtStrategy) {
+      throw new BadRequestException("Estratégia JWT não está habilitada");
     }
+    const tokens = jwtStrategy.generateTokenPair(user);
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      tokenType: "Bearer",
+    };
   }
 
   /**
-   * Autentica um usuário usando OAuth
+   * Obtém usuário do provedor OAuth (troca code por token e user info).
+   * O backend usa onOAuthCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização OAuth
    * @param state - Estado para CSRF protection
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  async loginWithOAuth(code: string, state?: string): Promise<IAuthUser> {
+  async getOAuthUserFromCode(code: string, state?: string): Promise<IAuthUser> {
     try {
       const credentials: { code: string; state?: string } = { code };
       if (state !== undefined) {
         credentials.state = state;
       }
 
-      const user = await this.oauthStrategy.validate(credentials);
+      const oauthStrategy = this.getStrategy("oauth") as OAuthStrategy;
+      const user = await oauthStrategy.validate(credentials);
 
       if (!user) {
         throw new UnauthorizedException("Falha na autenticação OAuth");
@@ -135,13 +115,14 @@ export class AuthService {
   }
 
   /**
-   * Autentica um usuário usando OpenID Connect
+   * Obtém usuário do provedor OpenID (troca code por token e user info).
+   * O backend usa onOpenIDCallback para encontrar/criar usuário e depois generateTokenPair.
    * @param code - Código de autorização
    * @param state - Estado para CSRF protection
    * @param nonce - Nonce para validação do ID token
-   * @returns Dados do usuário autenticado
+   * @returns Dados do usuário retornados pelo provedor
    */
-  async loginWithOpenID(
+  async getOpenIDUserFromCode(
     code: string,
     state?: string,
     nonce?: string,
@@ -157,7 +138,8 @@ export class AuthService {
         credentials.nonce = nonce;
       }
 
-      const user = await this.openidStrategy.validate(credentials);
+      const openidStrategy = this.getStrategy("openid") as OpenIDStrategy;
+      const user = await openidStrategy.validate(credentials);
 
       if (!user) {
         throw new UnauthorizedException("Falha na autenticação OpenID Connect");
@@ -182,7 +164,8 @@ export class AuthService {
    * @returns Dados do usuário ou null se inválido
    */
   async validateToken(token: string): Promise<IAuthUser | null> {
-    return this.jwtStrategy.validate({ token });
+    const jwtStrategy = this.getStrategy("jwt") as JwtStrategy;
+    return jwtStrategy.validate({ token });
   }
 
   /**
@@ -192,13 +175,14 @@ export class AuthService {
    */
   async refreshAccessToken(refreshToken: string): Promise<ITokenResponse> {
     try {
-      const user = await this.jwtStrategy.validate({ token: refreshToken });
+      const jwtStrategy = this.getStrategy("jwt") as JwtStrategy;
+      const user = await jwtStrategy.validate({ token: refreshToken });
 
       if (!user) {
         throw new UnauthorizedException("Refresh token inválido");
       }
 
-      const accessToken = this.jwtStrategy.sign(user);
+      const accessToken = jwtStrategy.sign(user);
 
       this.logger.log("Token atualizado com sucesso", { userId: user.id });
 
@@ -240,7 +224,8 @@ export class AuthService {
    * @returns URL de autorização
    */
   getOAuthAuthorizationUrl(state?: string): string {
-    return this.oauthStrategy.getAuthorizationUrl(state);
+    const oauthStrategy = this.getStrategy("oauth") as OAuthStrategy;
+    return oauthStrategy.getAuthorizationUrl(state);
   }
 
   /**
@@ -250,7 +235,8 @@ export class AuthService {
    * @returns URL de autorização
    */
   getOpenIDAuthorizationUrl(state?: string, nonce?: string): string {
-    return this.openidStrategy.getAuthorizationUrl(state, nonce);
+    const openidStrategy = this.getStrategy("openid") as OpenIDStrategy;
+    return openidStrategy.getAuthorizationUrl(state, nonce);
   }
 
   /**
@@ -259,6 +245,7 @@ export class AuthService {
    * @returns true se expirado, false caso contrário
    */
   isTokenExpired(token: string): boolean {
-    return this.jwtStrategy.isExpired(token);
+    const jwtStrategy = this.getStrategy("jwt") as JwtStrategy;
+    return jwtStrategy.isExpired(token);
   }
 }

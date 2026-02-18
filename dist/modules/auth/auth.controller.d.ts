@@ -1,20 +1,23 @@
 import { AuthService } from "./auth.service";
+import { AuthModuleConfig } from "./auth-module.config";
 import { HttpContext } from "../../core/http/interfaces/exception-filter.interface";
 import { Logger } from "../logger/logger.service";
+/**
+ * Controller de autenticação (SDK).
+ * - Token: refresh e validate (geração de token fica com o seu backend via AuthService.generateTokenPair).
+ * - OAuth/OpenID: authorize + callback; no callback você resolve o usuário (onOAuthCallback/onOpenIDCallback) e o SDK gera o token.
+ */
 export declare class AuthController {
   private readonly authService;
   private readonly logger;
-  constructor(authService: AuthService, logger: Logger);
+  private readonly authConfig;
+  constructor(
+    authService: AuthService,
+    logger: Logger,
+    authConfig: AuthModuleConfig,
+  );
   /**
-   * Endpoint de login com credenciais (email/senha)
-   * POST /auth/login
-   */
-  login(context: HttpContext): Promise<{
-    success: boolean;
-    data: import(".").ITokenResponse;
-  }>;
-  /**
-   * Endpoint para atualizar o token de acesso
+   * Atualiza o token de acesso usando refresh token.
    * POST /auth/refresh
    */
   refresh(context: HttpContext): Promise<{
@@ -22,7 +25,18 @@ export declare class AuthController {
     data: import(".").ITokenResponse;
   }>;
   /**
-   * Endpoint para obter a URL de autorização OAuth
+   * Valida um token e retorna o usuário.
+   * GET /auth/validate
+   */
+  validate(context: HttpContext): Promise<{
+    success: boolean;
+    data: {
+      user: import(".").IAuthUser;
+      valid: boolean;
+    };
+  }>;
+  /**
+   * Retorna a URL de autorização OAuth.
    * GET /auth/oauth/authorize
    */
   oauthAuthorize(context: HttpContext): Promise<{
@@ -33,21 +47,18 @@ export declare class AuthController {
     };
   }>;
   /**
-   * Endpoint de callback OAuth
+   * Callback OAuth: troca code por usuário do provedor, chama seu onOAuthCallback (se existir) e gera tokens.
    * GET /auth/oauth/callback
    */
   oauthCallback(context: HttpContext): Promise<{
     success: boolean;
     data: {
       user: import(".").IAuthUser;
-      tokens: {
-        accessToken: string;
-        refreshToken: string;
-      };
+      tokens: import(".").ITokenResponse;
     };
   }>;
   /**
-   * Endpoint para obter a URL de autorização OpenID Connect
+   * Retorna a URL de autorização OpenID.
    * GET /auth/openid/authorize
    */
   openidAuthorize(context: HttpContext): Promise<{
@@ -59,45 +70,25 @@ export declare class AuthController {
     };
   }>;
   /**
-   * Endpoint de callback OpenID Connect
+   * Callback OpenID: troca code por usuário do provedor, chama seu onOpenIDCallback (se existir) e gera tokens.
    * GET /auth/openid/callback
    */
   openidCallback(context: HttpContext): Promise<{
     success: boolean;
     data: {
       user: import(".").IAuthUser;
-      tokens: {
-        accessToken: string;
-        refreshToken: string;
-      };
+      tokens: import(".").ITokenResponse;
     };
   }>;
   /**
-   * Endpoint para validar um token
-   * GET /auth/validate
-   */
-  validate(context: HttpContext): Promise<{
-    success: boolean;
-    data: {
-      user: import(".").IAuthUser;
-      valid: boolean;
-    };
-  }>;
-  /**
-   * Endpoint para obter informações do usuário autenticado
+   * Dados do usuário autenticado (requer JwtAuthGuard na rota).
    * GET /auth/me
    */
   me(context: HttpContext): Promise<{
     success: boolean;
     data: any;
   }>;
-  /**
-   * Gera um estado aleatório para CSRF protection
-   */
   private generateState;
-  /**
-   * Gera um nonce aleatório para validação do ID token
-   */
   private generateNonce;
 }
 //# sourceMappingURL=auth.controller.d.ts.map

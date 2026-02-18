@@ -11,6 +11,8 @@ SDK para desenvolvimento de aplicações Node.js com TypeScript, incluindo siste
 - ✅ **Interceptors**: Suporte a interceptors globais e por rota
 - ✅ **Exception Filters**: Tratamento customizado de exceções
 - ✅ **Logger**: Sistema de logging estruturado
+- ✅ **ConfigModule**: Gerenciamento de configurações e variáveis de ambiente (similar ao NestJS)
+- ✅ **Módulos Dinâmicos**: Suporte a forRoot() e forRootAsync() (similar ao NestJS)
 - ✅ **Autenticação**: JWT, OAuth 2.0 e OpenID Connect
 - ✅ **Guards**: Proteção de rotas com autenticação e autorização
 - ✅ **Testes Unitários**: Cobertura completa com Jest
@@ -121,11 +123,50 @@ import { UserService } from "./user.service";
 export class UserModule {}
 ```
 
+### Configurar Módulos Dinâmicos
+
+```typescript
+import { Module, ConfigModule, AuthModule } from "@frani/sdk";
+
+@Module({
+  imports: [
+    // ConfigModule - gerencia variáveis de ambiente
+    ConfigModule.forRoot({
+      envFilePath: ".env",
+      load: [
+        () => ({
+          app: { name: "My App", port: 3000 },
+        }),
+      ],
+    }),
+
+    // AuthModule - configuração automática via ConfigService
+    AuthModule.forRootAsync(),
+  ],
+})
+export class AppModule {}
+```
+
+### Usar ConfigService
+
+```typescript
+import { Injectable, ConfigService } from "@frani/sdk";
+
+@Injectable()
+export class DatabaseService {
+  constructor(private readonly configService: ConfigService) {
+    const host = this.configService.get("DB_HOST", "localhost");
+    const port = this.configService.getNumber("DB_PORT", 5432);
+    const debug = this.configService.getBoolean("DEBUG_MODE", false);
+  }
+}
+```
+
 ### Inicializar a Aplicação
 
 ```typescript
-import { HttpServer } from "@core/http";
-import { AppModule } from "./modules/app.module";
+import { HttpServer } from "@frani/sdk";
+import { AppModule } from "./app.module";
 
 async function main() {
   const app = new HttpServer(3000);
@@ -220,6 +261,13 @@ export class GlobalExceptionFilter implements IExceptionFilter {
 
 app.setGlobalExceptionFilter(GlobalExceptionFilter);
 ```
+
+## 📚 Documentação Adicional
+
+- [ConfigModule - Gerenciamento de Configurações](./docs/CONFIG.md)
+- [AuthModule - Sistema de Autenticação](./docs/AUTH.md)
+- [Testes - Guia de Testes](./TESTING.md)
+- [Changelog - Histórico de Mudanças](./CHANGELOG.md)
 
 ## 📄 Licença
 

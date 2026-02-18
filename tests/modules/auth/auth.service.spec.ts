@@ -1,10 +1,14 @@
 import "reflect-metadata";
+import { Container } from "../../../src/core/di/container";
 import { AuthService } from "../../../src/modules/auth/auth.service";
 import { JwtStrategy } from "../../../src/modules/auth/strategies/jwt.strategy";
 import { OAuthStrategy } from "../../../src/modules/auth/strategies/oauth.strategy";
 import { OpenIDStrategy } from "../../../src/modules/auth/strategies/openid.strategy";
 import { Logger } from "../../../src/modules/logger/logger.service";
-import { UnauthorizedException } from "../../../src/core/http";
+import {
+  UnauthorizedException,
+  BadRequestException,
+} from "../../../src/core/http";
 
 describe("AuthService", () => {
   let authService: AuthService;
@@ -22,23 +26,23 @@ describe("AuthService", () => {
     openidStrategy = new OpenIDStrategy();
     logger = new Logger();
 
+    (Container as any).instances.set(JwtStrategy, jwtStrategy);
+    (Container as any).instances.set(OAuthStrategy, oauthStrategy);
+    (Container as any).instances.set(OpenIDStrategy, openidStrategy);
+
     jest.spyOn(logger, "log").mockImplementation();
     jest.spyOn(logger, "error").mockImplementation();
 
-    authService = new AuthService(
-      jwtStrategy,
-      oauthStrategy,
-      openidStrategy,
-      logger,
-    );
+    authService = new AuthService(logger);
   });
 
   afterEach(() => {
+    (Container as any).instances.clear();
     jest.restoreAllMocks();
   });
 
   describe("constructor", () => {
-    it("deve criar uma instância e registrar estratégias", () => {
+    it("deve criar uma instância e registrar estratégias disponíveis no Container", () => {
       expect(authService).toBeDefined();
       expect(logger.log).toHaveBeenCalledWith(
         "Estratégia de autenticação registrada: jwt",
@@ -59,7 +63,7 @@ describe("AuthService", () => {
         validate: jest.fn(),
       };
 
-      authService.registerStrategy(customStrategy);
+      authService.registerStrategy(customStrategy as any);
 
       expect(logger.log).toHaveBeenCalledWith(
         "Estratégia de autenticação registrada: custom",
@@ -94,91 +98,39 @@ describe("AuthService", () => {
     });
   });
 
-  describe("loginWithCredentials", () => {
-    it("deve autenticar usuário com credenciais válidas", async () => {
-      const userValidator = jest.fn().mockResolvedValue({
+  describe("generateTokenPair", () => {
+    it("deve gerar accessToken e refreshToken para um usuário", () => {
+      const user = {
         id: "123",
         email: "test@example.com",
-        password: await authService.hashPassword("password123"),
         roles: ["user"],
-      });
+      };
 
-      const result = await authService.loginWithCredentials(
-        "test@example.com",
-        "password123",
-        userValidator,
-      );
+      const result = authService.generateTokenPair(user);
 
       expect(result).toBeDefined();
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
       expect(result.tokenType).toBe("Bearer");
-      expect(userValidator).toHaveBeenCalledWith("test@example.com");
-      expect(logger.log).toHaveBeenCalledWith(
-        "Usuário autenticado com sucesso",
-        { userId: "123" },
-      );
     });
 
-    it("deve lançar UnauthorizedException quando usuário não existe", async () => {
-      const userValidator = jest.fn().mockResolvedValue(null);
+    it("deve lançar BadRequestException quando JWT não está habilitado", () => {
+      (Container as any).instances.delete(JwtStrategy);
+      const serviceWithoutJwt = new AuthService(logger);
 
-      await expect(
-        authService.loginWithCredentials(
-          "test@example.com",
-          "password123",
-          userValidator,
-        ),
-      ).rejects.toThrow(UnauthorizedException);
+      expect(() =>
+        serviceWithoutJwt.generateTokenPair({
+          id: "123",
+          email: "test@example.com",
+        }),
+      ).toThrow(BadRequestException);
 
-      await expect(
-        authService.loginWithCredentials(
-          "test@example.com",
-          "password123",
-          userValidator,
-        ),
-      ).rejects.toThrow("Credenciais inválidas");
-    });
-
-    it("deve lançar UnauthorizedException quando senha é inválida", async () => {
-      const userValidator = jest.fn().mockResolvedValue({
-        id: "123",
-        email: "test@example.com",
-        password: await authService.hashPassword("correctpassword"),
-      });
-
-      await expect(
-        authService.loginWithCredentials(
-          "test@example.com",
-          "wrongpassword",
-          userValidator,
-        ),
-      ).rejects.toThrow(UnauthorizedException);
-
-      await expect(
-        authService.loginWithCredentials(
-          "test@example.com",
-          "wrongpassword",
-          userValidator,
-        ),
-      ).rejects.toThrow("Credenciais inválidas");
-    });
-
-    it("deve logar erro quando autenticação falha", async () => {
-      const userValidator = jest.fn().mockResolvedValue(null);
-
-      try {
-        await authService.loginWithCredentials(
-          "test@example.com",
-          "password123",
-          userValidator,
-        );
-      } catch (error) {
-        expect(logger.error).toHaveBeenCalledWith(
-          "Falha na autenticação",
-          expect.any(Object),
-        );
-      }
+      expect(() =>
+        serviceWithoutJwt.generateTokenPair({
+          id: "123",
+          email: "test@example.com",
+        }),
+      ).toThrow("Estratégia JWT não está habilitada");
     });
   });
 
@@ -352,13 +304,8 @@ describe("AuthService", () => {
         secret: "test-secret",
         expiresIn: "1ms",
       });
-
-      const expiredService = new AuthService(
-        expiredStrategy,
-        oauthStrategy,
-        openidStrategy,
-        logger,
-      );
+      (Container as any).instances.set(JwtStrategy, expiredStrategy);
+      const expiredService = new AuthService(logger);
 
       const user = { id: "123", email: "test@example.com" };
       const token = expiredStrategy.sign(user);
@@ -372,42 +319,28 @@ describe("AuthService", () => {
   });
 
   describe("Integração", () => {
-    it("deve funcionar em fluxo completo de autenticação", async () => {
-      // 1. Hash de senha
-      const password = "password123";
-      const hashedPassword = await authService.hashPassword(password);
-
-      // 2. Validador de usuário
-      const userValidator = jest.fn().mockResolvedValue({
+    it("deve funcionar em fluxo completo: generateTokenPair -> validate -> refresh", async () => {
+      const user = {
         id: "123",
         email: "test@example.com",
-        password: hashedPassword,
         roles: ["user"],
-      });
+      };
 
-      // 3. Login
-      const loginResult = await authService.loginWithCredentials(
-        "test@example.com",
-        password,
-        userValidator,
-      );
+      const loginResult = authService.generateTokenPair(user);
 
       expect(loginResult.accessToken).toBeDefined();
       expect(loginResult.refreshToken).toBeDefined();
 
-      // 4. Validar token
       const validatedUser = await authService.validateToken(
         loginResult.accessToken,
       );
       expect(validatedUser?.id).toBe("123");
 
-      // 5. Refresh token
       const refreshResult = await authService.refreshAccessToken(
         loginResult.refreshToken!,
       );
       expect(refreshResult.accessToken).toBeDefined();
 
-      // 6. Validar novo token
       const revalidatedUser = await authService.validateToken(
         refreshResult.accessToken,
       );

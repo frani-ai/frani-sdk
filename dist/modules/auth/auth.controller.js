@@ -28,43 +28,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const http_decorator_1 = require("../../core/http/http-decorator");
 const auth_service_1 = require("./auth.service");
+const auth_module_config_1 = require("./auth-module.config");
 const login_dto_1 = require("./dto/login.dto");
 const http_1 = require("../../core/http");
 const logger_service_1 = require("../logger/logger.service");
+/**
+ * Controller de autenticação (SDK).
+ * - Token: refresh e validate (geração de token fica com o seu backend via AuthService.generateTokenPair).
+ * - OAuth/OpenID: authorize + callback; no callback você resolve o usuário (onOAuthCallback/onOpenIDCallback) e o SDK gera o token.
+ */
 let AuthController = class AuthController {
-  constructor(authService, logger) {
+  constructor(authService, logger, authConfig) {
     this.authService = authService;
     this.logger = logger;
+    this.authConfig = authConfig;
   }
   /**
-   * Endpoint de login com credenciais (email/senha)
-   * POST /auth/login
-   */
-  async login(context) {
-    const { email, password } = context.body;
-    const loginDto = new login_dto_1.LoginDto({ email, password });
-    const errors = loginDto.validate();
-    if (errors.length > 0) {
-      throw new http_1.BadRequestException(errors.join(", "));
-    }
-    // Exemplo de validador de usuário (deve ser implementado pelo desenvolvedor)
-    const userValidator = async (email) => {
-      // Aqui você deve buscar o usuário no banco de dados
-      // Este é apenas um exemplo
-      return null;
-    };
-    const tokens = await this.authService.loginWithCredentials(
-      loginDto.email || loginDto.username,
-      loginDto.password,
-      userValidator,
-    );
-    return {
-      success: true,
-      data: tokens,
-    };
-  }
-  /**
-   * Endpoint para atualizar o token de acesso
+   * Atualiza o token de acesso usando refresh token.
    * POST /auth/refresh
    */
   async refresh(context) {
@@ -83,100 +63,7 @@ let AuthController = class AuthController {
     };
   }
   /**
-   * Endpoint para obter a URL de autorização OAuth
-   * GET /auth/oauth/authorize
-   */
-  async oauthAuthorize(context) {
-    const state = this.generateState();
-    const url = this.authService.getOAuthAuthorizationUrl(state);
-    return {
-      success: true,
-      data: {
-        url,
-        state,
-      },
-    };
-  }
-  /**
-   * Endpoint de callback OAuth
-   * GET /auth/oauth/callback
-   */
-  async oauthCallback(context) {
-    const url = new URL(
-      context.request.url,
-      `http://${context.request.headers.host}`,
-    );
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    if (!code) {
-      throw new http_1.BadRequestException(
-        "Código de autorização não fornecido",
-      );
-    }
-    const user = await this.authService.loginWithOAuth(
-      code,
-      state || undefined,
-    );
-    // Gerar tokens JWT para o usuário OAuth
-    const tokens = this.authService["jwtStrategy"].generateTokenPair(user);
-    return {
-      success: true,
-      data: {
-        user,
-        tokens,
-      },
-    };
-  }
-  /**
-   * Endpoint para obter a URL de autorização OpenID Connect
-   * GET /auth/openid/authorize
-   */
-  async openidAuthorize(context) {
-    const state = this.generateState();
-    const nonce = this.generateNonce();
-    const url = this.authService.getOpenIDAuthorizationUrl(state, nonce);
-    return {
-      success: true,
-      data: {
-        url,
-        state,
-        nonce,
-      },
-    };
-  }
-  /**
-   * Endpoint de callback OpenID Connect
-   * GET /auth/openid/callback
-   */
-  async openidCallback(context) {
-    const url = new URL(
-      context.request.url,
-      `http://${context.request.headers.host}`,
-    );
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    // Nonce deve ser validado do estado da sessão
-    if (!code) {
-      throw new http_1.BadRequestException(
-        "Código de autorização não fornecido",
-      );
-    }
-    const user = await this.authService.loginWithOpenID(
-      code,
-      state || undefined,
-    );
-    // Gerar tokens JWT para o usuário OpenID
-    const tokens = this.authService["jwtStrategy"].generateTokenPair(user);
-    return {
-      success: true,
-      data: {
-        user,
-        tokens,
-      },
-    };
-  }
-  /**
-   * Endpoint para validar um token
+   * Valida um token e retorna o usuário.
    * GET /auth/validate
    */
   async validate(context) {
@@ -201,7 +88,109 @@ let AuthController = class AuthController {
     };
   }
   /**
-   * Endpoint para obter informações do usuário autenticado
+   * Retorna a URL de autorização OAuth.
+   * GET /auth/oauth/authorize
+   */
+  async oauthAuthorize(context) {
+    const state = this.generateState();
+    const url = this.authService.getOAuthAuthorizationUrl(state);
+    return {
+      success: true,
+      data: {
+        url,
+        state,
+      },
+    };
+  }
+  /**
+   * Callback OAuth: troca code por usuário do provedor, chama seu onOAuthCallback (se existir) e gera tokens.
+   * GET /auth/oauth/callback
+   */
+  async oauthCallback(context) {
+    const url = new URL(
+      context.request.url,
+      `http://${context.request.headers.host}`,
+    );
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    if (!code) {
+      throw new http_1.BadRequestException(
+        "Código de autorização não fornecido",
+      );
+    }
+    const providerUser = await this.authService.getOAuthUserFromCode(
+      code,
+      state || undefined,
+    );
+    const user = this.authConfig.onOAuthCallback
+      ? await this.authConfig.onOAuthCallback(providerUser)
+      : providerUser;
+    if (!user) {
+      throw new http_1.UnauthorizedException("Usuário não autorizado");
+    }
+    const tokens = this.authService.generateTokenPair(user);
+    return {
+      success: true,
+      data: {
+        user,
+        tokens,
+      },
+    };
+  }
+  /**
+   * Retorna a URL de autorização OpenID.
+   * GET /auth/openid/authorize
+   */
+  async openidAuthorize(context) {
+    const state = this.generateState();
+    const nonce = this.generateNonce();
+    const url = this.authService.getOpenIDAuthorizationUrl(state, nonce);
+    return {
+      success: true,
+      data: {
+        url,
+        state,
+        nonce,
+      },
+    };
+  }
+  /**
+   * Callback OpenID: troca code por usuário do provedor, chama seu onOpenIDCallback (se existir) e gera tokens.
+   * GET /auth/openid/callback
+   */
+  async openidCallback(context) {
+    const url = new URL(
+      context.request.url,
+      `http://${context.request.headers.host}`,
+    );
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    if (!code) {
+      throw new http_1.BadRequestException(
+        "Código de autorização não fornecido",
+      );
+    }
+    const providerUser = await this.authService.getOpenIDUserFromCode(
+      code,
+      state || undefined,
+    );
+    const user = this.authConfig.onOpenIDCallback
+      ? await this.authConfig.onOpenIDCallback(providerUser)
+      : providerUser;
+    if (!user) {
+      throw new http_1.UnauthorizedException("Usuário não autorizado");
+    }
+    const tokens = this.authService.generateTokenPair(user);
+    return {
+      success: true,
+      data: {
+        user,
+        tokens,
+      },
+    };
+  }
+  /**
+   * Dados do usuário autenticado (requer JwtAuthGuard na rota).
    * GET /auth/me
    */
   async me(context) {
@@ -214,18 +203,12 @@ let AuthController = class AuthController {
       data: user,
     };
   }
-  /**
-   * Gera um estado aleatório para CSRF protection
-   */
   generateState() {
     return (
       Math.random().toString(36).substring(2, 15) +
       Math.random().toString(36).substring(2, 15)
     );
   }
-  /**
-   * Gera um nonce aleatório para validação do ID token
-   */
   generateNonce() {
     return (
       Math.random().toString(36).substring(2, 15) +
@@ -236,17 +219,6 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate(
   [
-    (0, http_decorator_1.Post)("/login"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise),
-  ],
-  AuthController.prototype,
-  "login",
-  null,
-);
-__decorate(
-  [
     (0, http_decorator_1.Post)("/refresh"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -254,6 +226,17 @@ __decorate(
   ],
   AuthController.prototype,
   "refresh",
+  null,
+);
+__decorate(
+  [
+    (0, http_decorator_1.Get)("/validate"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise),
+  ],
+  AuthController.prototype,
+  "validate",
   null,
 );
 __decorate(
@@ -302,17 +285,6 @@ __decorate(
 );
 __decorate(
   [
-    (0, http_decorator_1.Get)("/validate"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise),
-  ],
-  AuthController.prototype,
-  "validate",
-  null,
-);
-__decorate(
-  [
     (0, http_decorator_1.Get)("/me"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -328,6 +300,7 @@ exports.AuthController = AuthController = __decorate(
     __metadata("design:paramtypes", [
       auth_service_1.AuthService,
       logger_service_1.Logger,
+      auth_module_config_1.AuthModuleConfig,
     ]),
   ],
   AuthController,
