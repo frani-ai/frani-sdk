@@ -5,7 +5,7 @@ import { getPackageRef } from "@core/package-ref";
 import { Router } from "./http-router";
 import { IInterceptor } from "./interfaces/interceptor.interface";
 import { IExceptionFilter } from "./interfaces/exception-filter.interface";
-import { printBanner } from "@core/banner";
+import { printBanner, printListeningLine } from "@core/banner";
 import { getMetadata } from "@core/metadata";
 import { Container } from "@core/di/container";
 import {
@@ -48,12 +48,15 @@ export class HttpServer {
   }
 
   async listen() {
-    const versionControlUrl = process.env["FRANI_VERSION_CONTROL_URL"];
+    const versionControlUrl =
+      process.env["FRANI_VERSION_CONTROL_URL"] ||
+      "https://frani-ai.github.io/frani-sdk/version-control.json";
     const result = await runVersionCheck(
       getPackageRef().version,
       versionControlUrl,
     );
     applyVersionCheckResult(result);
+    printListeningLine(this.port);
 
     const server = http.createServer(async (request: any, response: any) => {
       const httpResponse = await this.router.handle(request, response);

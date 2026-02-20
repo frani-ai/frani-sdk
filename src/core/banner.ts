@@ -42,6 +42,9 @@ export function printBanner(port: number): void {
   console.log(row("Environment", env, envColor));
   console.log(row("Port", String(port), GR));
   console.log(divider);
+}
+
+export function printListeningLine(port: number): void {
   console.log(
     `\n  ${GR}${B}▶  Listening${R}  ${WH}http://localhost:${port}${R}\n`,
   );

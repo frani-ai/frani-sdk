@@ -36,8 +36,8 @@ describe("HttpException", () => {
     it("deve serializar para JSON corretamente", () => {
       const beforeTime = new Date().toISOString();
       const exception = new HttpException("Test error", 418, "TeapotError");
-      const afterTime = new Date().toISOString();
       const json = exception.toJSON();
+      const afterTime = new Date().toISOString();
 
       expect(json.statusCode).toBe(418);
       expect(json.error).toBe("TeapotError");
