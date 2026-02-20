@@ -10,3 +10,6 @@ export * from "./metadata";
 
 // Banner
 export * from "./banner";
+
+// Version control
+export * from "./version-control";

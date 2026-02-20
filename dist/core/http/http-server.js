@@ -9,10 +9,12 @@ exports.HttpServer = void 0;
 require("reflect-metadata");
 require("dotenv/config");
 const http_1 = __importDefault(require("http"));
+const package_ref_1 = require("../package-ref");
 const http_router_1 = require("./http-router");
 const banner_1 = require("../banner");
 const metadata_1 = require("../metadata");
 const container_1 = require("../di/container");
+const version_control_1 = require("../version-control");
 class HttpServer {
   constructor(port = 3000) {
     this.port = port;
@@ -39,6 +41,12 @@ class HttpServer {
     this.router.registerController(controllerInstance);
   }
   async listen() {
+    const versionControlUrl = process.env["FRANI_VERSION_CONTROL_URL"];
+    const result = await (0, version_control_1.runVersionCheck)(
+      (0, package_ref_1.getPackageRef)().version,
+      versionControlUrl,
+    );
+    (0, version_control_1.applyVersionCheckResult)(result);
     const server = http_1.default.createServer(async (request, response) => {
       const httpResponse = await this.router.handle(request, response);
       if (!httpResponse) {

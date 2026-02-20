@@ -30,15 +30,35 @@ var __exportStar =
         __createBinding(exports, m, p);
   };
 Object.defineProperty(exports, "__esModule", { value: true });
-// HTTP
-__exportStar(require("./http"), exports);
-// Dependency Injection
-__exportStar(require("./di/container"), exports);
-__exportStar(require("./di/container-decorator"), exports);
-// Metadata
-__exportStar(require("./metadata"), exports);
-// Banner
-__exportStar(require("./banner"), exports);
-// Version control
-__exportStar(require("./version-control"), exports);
+exports.applyVersionCheckResult =
+  exports.runVersionCheck =
+  exports.checkVersion =
+  exports.fetchVersionControl =
+    void 0;
+__exportStar(require("./version-control.types"), exports);
+var version_check_1 = require("./version-check");
+Object.defineProperty(exports, "fetchVersionControl", {
+  enumerable: true,
+  get: function () {
+    return version_check_1.fetchVersionControl;
+  },
+});
+Object.defineProperty(exports, "checkVersion", {
+  enumerable: true,
+  get: function () {
+    return version_check_1.checkVersion;
+  },
+});
+Object.defineProperty(exports, "runVersionCheck", {
+  enumerable: true,
+  get: function () {
+    return version_check_1.runVersionCheck;
+  },
+});
+Object.defineProperty(exports, "applyVersionCheckResult", {
+  enumerable: true,
+  get: function () {
+    return version_check_1.applyVersionCheckResult;
+  },
+});
 //# sourceMappingURL=index.js.map

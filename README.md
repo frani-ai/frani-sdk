@@ -15,6 +15,7 @@ SDK para desenvolvimento de aplicações Node.js com TypeScript, incluindo siste
 - ✅ **Módulos Dinâmicos**: Suporte a forRoot() e forRootAsync() (similar ao NestJS)
 - ✅ **Autenticação**: JWT, OAuth 2.0 e OpenID Connect
 - ✅ **Guards**: Proteção de rotas com autenticação e autorização
+- ✅ **Controle de versão**: Verificação na inicialização (atual, depreciada ou bloqueada)
 - ✅ **Testes Unitários**: Cobertura completa com Jest
 
 ## 📦 Instalação
@@ -217,6 +218,21 @@ frani-sdk/
 
 ## 🔧 Configuração
 
+### Controle de versão
+
+Na inicialização, o servidor pode verificar a versão do SDK contra um arquivo hospedado no Git (ou em qualquer URL pública). Configure a variável de ambiente:
+
+```bash
+FRANI_VERSION_CONTROL_URL=https://raw.githubusercontent.com/SEU_ORG/frani-sdk/main/version-control.json
+```
+
+- **Se não configurada**: a verificação é ignorada e o servidor sobe normalmente.
+- **Versão atual**: exibe confirmação e sobe.
+- **Versão depreciada**: exibe aviso com mensagem e data de depreciação e sobe.
+- **Versão bloqueada** (ex.: segurança): exibe motivo e **data de bloqueio**, e **impede** a inicialização.
+
+O arquivo `version-control.json` deve ficar no repositório. Formato e exemplos em [docs/version-control.md](./docs/version-control.md).
+
 ### TypeScript
 
 O projeto usa TypeScript com configurações rigorosas. Veja `tsconfig.json` para detalhes.
@@ -266,6 +282,7 @@ app.setGlobalExceptionFilter(GlobalExceptionFilter);
 
 - [ConfigModule - Gerenciamento de Configurações](./docs/CONFIG.md)
 - [AuthModule - Sistema de Autenticação](./docs/AUTH.md)
+- [Controle de versão](./docs/version-control.md)
 - [Testes - Guia de Testes](./TESTING.md)
 - [Changelog - Histórico de Mudanças](./CHANGELOG.md)
 
