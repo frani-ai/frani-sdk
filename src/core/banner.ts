@@ -1,4 +1,4 @@
-import pkg from "../../package.json";
+import { getPackageRef } from "./package-ref";
 
 const ESC = "\x1b";
 const R = `${ESC}[0m`; // reset
@@ -9,14 +9,17 @@ const YW = `${ESC}[33m`; // yellow
 const GY = `${ESC}[90m`; // gray
 const WH = `${ESC}[97m`; // bright white
 
-const art = [
-  `${CY}${B}  ███████╗██████╗  █████╗ ███╗   ██╗██╗${R}`,
-  `${CY}${B}  ██╔════╝██╔══██╗██╔══██╗████╗  ██║██║${R}`,
-  `${CY}${B}  █████╗  ██████╔╝███████║██╔██╗ ██║██║${R}`,
-  `${CY}${B}  ██╔══╝  ██╔══██╗██╔══██║██║╚██╗██║██║${R}`,
-  `${CY}${B}  ██║     ██║  ██║██║  ██║██║ ╚████║██║${R}`,
-  `${CY}${B}  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ${GY}SDK v${pkg.version}${R}`,
-];
+function getArt(): string[] {
+  const pkg = getPackageRef();
+  return [
+    `${CY}${B}  ███████╗██████╗  █████╗ ███╗   ██╗██╗${R}`,
+    `${CY}${B}  ██╔════╝██╔══██╗██╔══██╗████╗  ██║██║${R}`,
+    `${CY}${B}  █████╗  ██████╔╝███████║██╔██╗ ██║██║${R}`,
+    `${CY}${B}  ██╔══╝  ██╔══██╗██╔══██║██║╚██╗██║██║${R}`,
+    `${CY}${B}  ██║     ██║  ██║██║  ██║██║ ╚████║██║${R}`,
+    `${CY}${B}  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ${GY}SDK v${pkg.version}${R}`,
+  ];
+}
 
 const divider = `  ${GY}${"─".repeat(44)}${R}`;
 
@@ -25,11 +28,12 @@ function row(label: string, value: string, valueColor = WH): string {
 }
 
 export function printBanner(port: number): void {
+  const pkg = getPackageRef();
   const env = process.env["NODE_ENV"] ?? "development";
   const envColor = env === "production" ? GR : YW;
 
   console.log("");
-  art.forEach((line) => console.log(line));
+  getArt().forEach((line) => console.log(line));
   console.log("");
   console.log(divider);
   console.log(row("Framework", pkg.name));

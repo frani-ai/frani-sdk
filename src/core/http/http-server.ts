@@ -1,12 +1,17 @@
 import "reflect-metadata";
 import "dotenv/config";
 import http from "http";
+import { getPackageRef } from "@core/package-ref";
 import { Router } from "./http-router";
 import { IInterceptor } from "./interfaces/interceptor.interface";
 import { IExceptionFilter } from "./interfaces/exception-filter.interface";
 import { printBanner } from "@core/banner";
 import { getMetadata } from "@core/metadata";
 import { Container } from "@core/di/container";
+import {
+  runVersionCheck,
+  applyVersionCheckResult,
+} from "@core/version-control";
 
 export class HttpServer {
   private port: number;
@@ -43,6 +48,13 @@ export class HttpServer {
   }
 
   async listen() {
+    const versionControlUrl = process.env["FRANI_VERSION_CONTROL_URL"];
+    const result = await runVersionCheck(
+      getPackageRef().version,
+      versionControlUrl,
+    );
+    applyVersionCheckResult(result);
+
     const server = http.createServer(async (request: any, response: any) => {
       const httpResponse = await this.router.handle(request, response);
       if (!httpResponse) {

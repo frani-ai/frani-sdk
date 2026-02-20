@@ -1,0 +1,18 @@
+{
+  "latest": "1.0.1",
+  "minSupported": "1.0.0",
+  "deprecated": [
+    {
+      "version": "0.9.0",
+      "message": "Atualize para 1.0.0. Suporte encerrado em breve.",
+      "deprecatedAt": "2025-01-15"
+    }
+  ],
+  "blocked": [
+    {
+      "version": "0.8.0",
+      "reason": "Vulnerabilidade de segurança crítica (CVE-XXXX). Atualize imediatamente.",
+      "blockedAt": "2025-02-01"
+    }
+  ]
+}
