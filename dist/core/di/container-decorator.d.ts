@@ -7,5 +7,9 @@ export declare function Module(metadata?: {
 export declare function Injectable(): (target: any) => void;
 export declare function Inject(
   token: any,
-): (target: any, _propertyKey: string, parameterIndex: number) => void;
+): (
+  target: any,
+  _propertyKey: string | undefined,
+  parameterIndex: number,
+) => void;
 //# sourceMappingURL=container-decorator.d.ts.map

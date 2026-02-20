@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import "reflect-metadata";
 
 // Mock console methods to avoid cluttering test output
