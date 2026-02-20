@@ -48,7 +48,9 @@ export class HttpServer {
   }
 
   async listen() {
-    const versionControlUrl = process.env["FRANI_VERSION_CONTROL_URL"];
+    const versionControlUrl =
+      process.env["FRANI_VERSION_CONTROL_URL"] ||
+      "https://frani-ai.github.io/frani-sdk/version-control.json";
     const result = await runVersionCheck(
       getPackageRef().version,
       versionControlUrl,
