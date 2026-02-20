@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frani SDK</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --surface: #161b22;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --border: #30363d;
+        --code-bg: #21262d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--text);
+        background: var(--bg);
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin-top: 0;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.35rem;
+        margin-top: 2rem;
+        color: var(--text);
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+        color: var(--muted);
+      }
+      p {
+        margin: 0.75rem 0;
+      }
+      ul {
+        margin: 0.75rem 0;
+        padding-left: 1.5rem;
+      }
+      li {
+        margin: 0.35rem 0;
+      }
+      li strong {
+        color: var(--green);
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem;
+        overflow-x: auto;
+        font-size: 0.875rem;
+        margin: 1rem 0;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        font-size: 0.9em;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        color: var(--text);
+      }
+      p code,
+      li code {
+        background: var(--code-bg);
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+      }
+      .block + .block {
+        margin-top: 1.5rem;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚀 Frani SDK</h1>
+    <p>
+      SDK para desenvolvimento de aplicações Node.js com TypeScript, incluindo
+      sistema de injeção de dependências, servidor HTTP e logging.
+    </p>
+
+    <h2>📦 Recursos</h2>
+    <ul>
+      <li>
+        <strong>Injeção de Dependências</strong>: Sistema completo de DI com
+        decorators
+      </li>
+      <li>
+        <strong>Servidor HTTP</strong>: Servidor HTTP nativo com suporte a rotas
+        e controllers
+      </li>
+      <li>
+        <strong>Decorators</strong>: @Controller, @Get, @Post, @Put, @Delete,
+        @Injectable, @Module
+      </li>
+      <li>
+        <strong>Exceções HTTP</strong>: Exceções tipadas para todos os status
+        codes HTTP
+      </li>
+      <li>
+        <strong>Interceptors</strong>: Suporte a interceptors globais e por rota
+      </li>
+      <li>
+        <strong>Exception Filters</strong>: Tratamento customizado de exceções
+      </li>
+      <li><strong>Logger</strong>: Sistema de logging estruturado</li>
+      <li>
+        <strong>ConfigModule</strong>: Gerenciamento de configurações e
+        variáveis de ambiente (similar ao NestJS)
+      </li>
+      <li>
+        <strong>Módulos Dinâmicos</strong>: Suporte a forRoot() e forRootAsync()
+        (similar ao NestJS)
+      </li>
+      <li><strong>Autenticação</strong>: JWT, OAuth 2.0 e OpenID Connect</li>
+      <li>
+        <strong>Guards</strong>: Proteção de rotas com autenticação e
+        autorização
+      </li>
+      <li>
+        <strong>Controle de versão</strong>: Verificação na inicialização
+        (atual, depreciada ou bloqueada)
+      </li>
+      <li><strong>Testes Unitários</strong>: Cobertura completa com Jest</li>
+    </ul>
+
+    <h2>📦 Instalação</h2>
+    <pre><code>npm install</code></pre>
+
+    <h2>🛠️ Scripts Disponíveis</h2>
+
+    <h3>Desenvolvimento</h3>
+    <pre><code># Iniciar em modo desenvolvimento
+npm run start:dev
+
+# Iniciar em modo debug
+npm run start:debug
+
+# Build do projeto
+npm run build
+
+# Iniciar em produção
+npm run start:prod</code></pre>
+
+    <h3>Testes</h3>
+    <pre><code># Executar todos os testes
+npm test
+
+# Executar testes em modo watch
+npm run test:watch
+
+# Executar testes com cobertura
+npm run test:coverage
+
+# Executar testes em modo verbose
+npm run test:verbose</code></pre>
+
+    <h3>Qualidade de Código</h3>
+    <pre><code># Verificar tipos TypeScript
+npm run type-check</code></pre>
+
+    <h2>📝 Exemplo de Uso</h2>
+
+    <h3>Criar um Controller</h3>
+    <pre><code>import { Controller, Get, Post } from "@core/http";
+import { Injectable } from "@core/di/container-decorator";
+
+@Controller("users")
+export class UserController {
+  @Get("/")
+  listUsers() {
+    return { users: [] };
+  }
+
+  @Get("/:id")
+  getUser() {
+    return { id: 1, name: "John" };
+  }
+
+  @Post("/")
+  @HttpStatus(HttpStatusCode.CREATED)
+  createUser() {
+    return { id: 1, name: "John" };
+  }
+}</code></pre>
+
+    <h3>Criar um Service</h3>
+    <pre><code>import { Injectable } from "@core/di/container-decorator";
+import { Logger } from "@modules/logger/logger.service";
+
+@Injectable()
+export class UserService {
+  constructor(private readonly logger: Logger) {}
+
+  findAll() {
+    this.logger.log("Finding all users");
+    return [];
+  }
+}</code></pre>
+
+    <h3>Criar um Module</h3>
+    <pre><code>import { Module } from "@core/di/container-decorator";
+import { UserController } from "./user.controller";
+import { UserService } from "./user.service";
+
+@Module({
+  controllers: [UserController],
+  providers: [UserService],
+})
+export class UserModule {}</code></pre>
+
+    <h3>Configurar Módulos Dinâmicos</h3>
+    <pre><code>import { Module, ConfigModule, AuthModule } from "@frani/sdk";
+
+@Module({
+  imports: [
+    // ConfigModule - gerencia variáveis de ambiente
+    ConfigModule.forRoot({
+      envFilePath: ".env",
+      load: [
+        () => ({
+          app: { name: "My App", port: 3000 },
+        }),
+      ],
+    }),
+
+    // AuthModule - configuração automática via ConfigService
+    AuthModule.forRootAsync(),
+  ],
+})
+export class AppModule {}</code></pre>
+
+    <h3>Usar ConfigService</h3>
+    <pre><code>import { Injectable, ConfigService } from "@frani/sdk";
+
+@Injectable()
+export class DatabaseService {
+  constructor(private readonly configService: ConfigService) {
+    const host = this.configService.get("DB_HOST", "localhost");
+    const port = this.configService.getNumber("DB_PORT", 5432);
+    const debug = this.configService.getBoolean("DEBUG_MODE", false);
+  }
+}</code></pre>
+
+    <h3>Inicializar a Aplicação</h3>
+    <pre><code>import { HttpServer } from "@frani/sdk";
+import { AppModule } from "./app.module";
+
+async function main() {
+  const app = new HttpServer(3000);
+  app.registerModule(AppModule);
+  app.listen();
+}
+
+main();</code></pre>
+
+    <h2>🧪 Testes</h2>
+    <p>
+      O projeto possui uma suíte completa de testes unitários com
+      <strong>97 testes</strong> cobrindo:
+    </p>
+    <ul>
+      <li><strong>Sistema de Injeção de Dependências</strong></li>
+      <li><strong>Decorators (DI e HTTP)</strong></li>
+      <li><strong>Exceções HTTP</strong></li>
+      <li><strong>Sistema de Metadata</strong></li>
+      <li><strong>Logger Service</strong></li>
+      <li><strong>Controllers</strong></li>
+    </ul>
+    <h3>Cobertura de Testes</h3>
+    <pre><code>Test Suites: 7 passed, 7 total
+Tests:       97 passed, 97 total</code></pre>
+    <p>
+      Para mais detalhes sobre os testes, consulte
+      <a href="./tests/README.md">tests/README.md</a>.
+    </p>
+
+    <h2>📂 Estrutura do Projeto</h2>
+    <pre><code>frani-sdk/
+├── src/
+│   ├── core/
+│   │   ├── di/              # Sistema de injeção de dependências
+│   │   ├── http/            # Servidor HTTP e decorators
+│   │   └── metadata.ts      # Sistema de metadata
+│   └── modules/
+│       ├── app.module.ts    # Módulo principal
+│       ├── health/          # Health check
+│       └── logger/          # Sistema de logging
+├── tests/                   # Testes unitários
+├── examples/                # Exemplos de uso
+└── dist/                    # Build output</code></pre>
+
+    <h2>🔧 Configuração</h2>
+
+    <h3>Controle de versão</h3>
+    <p>
+      Na inicialização, o servidor pode verificar a versão do SDK contra um
+      arquivo hospedado no Git (ou em qualquer URL pública). Configure a
+      variável de ambiente:
+    </p>
+    <pre><code>FRANI_VERSION_CONTROL_URL=https://raw.githubusercontent.com/SEU_ORG/frani-sdk/main/version-control.json</code></pre>
+    <ul>
+      <li>
+        <strong>Se não configurada</strong>: a verificação é ignorada e o
+        servidor sobe normalmente.
+      </li>
+      <li><strong>Versão atual</strong>: exibe confirmação e sobe.</li>
+      <li>
+        <strong>Versão depreciada</strong>: exibe aviso com mensagem e data de
+        depreciação e sobe.
+      </li>
+      <li>
+        <strong>Versão bloqueada</strong> (ex.: segurança): exibe motivo e
+        <strong>data de bloqueio</strong>, e <strong>impede</strong> a
+        inicialização.
+      </li>
+    </ul>
+    <p>
+      O arquivo <code>version-control.json</code> deve ficar no repositório.
+      Formato e exemplos em
+      <a href="./docs/version-control.md">docs/version-control.md</a>.
+    </p>
+
+    <h3>TypeScript</h3>
+    <p>
+      O projeto usa TypeScript com configurações rigorosas. Veja
+      <code>tsconfig.json</code> para detalhes.
+    </p>
+
+    <h3>Path Aliases</h3>
+    <pre><code>@core/*   -> src/core/*
+@modules/* -> src/modules/*</code></pre>
+
+    <h2>🎯 Recursos Avançados</h2>
+
+    <h3>Interceptors</h3>
+    <pre><code>export class AuthInterceptor implements IInterceptor {
+  async intercept(context: HttpContext): Promise&lt;boolean&gt; {
+    // Lógica de autenticação
+    return true;
+  }
+}
+
+// Aplicar globalmente
+app.setGlobalInterceptor(AuthInterceptor);
+
+// Ou por rota
+@Get('/protected')
+@Interceptor(AuthInterceptor)
+protectedRoute() {}</code></pre>
+
+    <h3>Exception Filters</h3>
+    <pre><code>@Catch()
+export class GlobalExceptionFilter implements IExceptionFilter {
+  async catch(exception: HttpException, context: HttpContext) {
+    // Tratamento customizado de exceções
+  }
+}
+
+app.setGlobalExceptionFilter(GlobalExceptionFilter);</code></pre>
+
+    <h2>📚 Documentação Adicional</h2>
+    <ul>
+      <li>
+        <a href="./docs/CONFIG.md"
+          >ConfigModule - Gerenciamento de Configurações</a
+        >
+      </li>
+      <li><a href="./docs/AUTH.md">AuthModule - Sistema de Autenticação</a></li>
+      <li><a href="./docs/version-control.md">Controle de versão</a></li>
+      <li><a href="./TESTING.md">Testes - Guia de Testes</a></li>
+      <li><a href="./CHANGELOG.md">Changelog - Histórico de Mudanças</a></li>
+      <li><a href="./roadmap.html">Changelog - Histórico de Mudanças</a></li>
+    </ul>
+
+    <hr />
+
+    <h2>📄 Licença</h2>
+    <p>ISC</p>
+
+    <h2>👤 Autor</h2>
+    <p>
+      Diogo Franco
+      <a href="mailto:diogo.franco85@gmail.com">diogo.franco85@gmail.com</a>
+    </p>
+
+    <h2>🤝 Contribuindo</h2>
+    <ol>
+      <li>Fork o projeto</li>
+      <li>
+        Crie uma branch para sua feature (<code
+          >git checkout -b feature/AmazingFeature</code
+        >)
+      </li>
+      <li>
+        Commit suas mudanças (<code
+          >git commit -m 'Add some AmazingFeature'</code
+        >)
+      </li>
+      <li>
+        Push para a branch (<code>git push origin feature/AmazingFeature</code>)
+      </li>
+      <li>Abra um Pull Request</li>
+    </ol>
+    <h3>Convenções de Commit</h3>
+    <ul>
+      <li>Os testes são executados automaticamente no pre-commit hook</li>
+      <li>O código é formatado automaticamente com Prettier</li>
+      <li>Mantenha a cobertura de testes acima de 80%</li>
+    </ul>
+  </body>
+</html>

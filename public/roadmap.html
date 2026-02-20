@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roadmap — Frani SDK</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --surface: #161b22;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --orange: #d29922;
+        --border: #30363d;
+        --code-bg: #21262d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--text);
+        background: var(--bg);
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin-top: 0;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.35rem;
+        margin-top: 2rem;
+        color: var(--text);
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+        color: var(--muted);
+      }
+      p {
+        margin: 0.75rem 0;
+      }
+      ul {
+        margin: 0.75rem 0;
+        padding-left: 1.5rem;
+      }
+      li {
+        margin: 0.5rem 0;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.2em 0.5em;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .badge-done {
+        background: rgba(63, 185, 80, 0.2);
+        color: var(--green);
+      }
+      .badge-now {
+        background: rgba(210, 153, 34, 0.2);
+        color: var(--orange);
+      }
+      .badge-next {
+        background: rgba(88, 166, 255, 0.2);
+        color: var(--accent);
+      }
+      .timeline {
+        margin: 1rem 0;
+        padding-left: 1rem;
+        border-left: 2px solid var(--border);
+      }
+      .timeline section {
+        margin-bottom: 1.5rem;
+      }
+      .timeline h3 {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .timeline ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      .timeline li {
+        padding-left: 1rem;
+        position: relative;
+      }
+      .timeline li::before {
+        content: "▸";
+        position: absolute;
+        left: 0;
+        color: var(--muted);
+      }
+      nav {
+        margin-bottom: 2rem;
+      }
+      nav a {
+        margin-right: 1rem;
+        color: var(--muted);
+      }
+      nav a:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="README.html">← Documentação</a>
+    </nav>
+
+    <h1>🗺️ Roadmap — Frani SDK</h1>
+    <p>
+      Visão do que já foi entregue e do que está planejado para as próximas
+      versões.
+    </p>
+
+    <h2>✅ Concluído (v1.x)</h2>
+    <div class="timeline">
+      <section>
+        <h3><span class="badge badge-done">v1.0</span> Núcleo</h3>
+        <ul>
+          <li>
+            Injeção de dependências com decorators (<code>@Injectable</code>,
+            <code>@Inject</code>, <code>@Module</code>)
+          </li>
+          <li>
+            Servidor HTTP e roteamento (<code>@Controller</code>,
+            <code>@Get</code>, <code>@Post</code>, etc.)
+          </li>
+          <li>Exceções HTTP tipadas e Exception Filters</li>
+          <li>Interceptors globais e por rota</li>
+          <li>Sistema de metadata e reflect-metadata</li>
+        </ul>
+      </section>
+      <section>
+        <h3><span class="badge badge-done">v1.0</span> Módulos</h3>
+        <ul>
+          <li>Logger estruturado</li>
+          <li>ConfigModule com forRoot / forRootAsync</li>
+          <li>HttpClient (axios) como módulo</li>
+          <li>Auth: JWT, OAuth 2.0 e OpenID Connect</li>
+          <li>Guards: JwtAuthGuard e RolesGuard</li>
+        </ul>
+      </section>
+      <section>
+        <h3><span class="badge badge-done">v1.0</span> Operação e qualidade</h3>
+        <ul>
+          <li>
+            Controle de versão na inicialização (atual / depreciada / bloqueada)
+          </li>
+          <li>Banner e linha “Listening” com versão após o banner</li>
+          <li>Testes unitários com Jest</li>
+          <li>Validação de DTO (helpers)</li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>🔶 Em andamento</h2>
+    <div class="timeline">
+      <section>
+        <h3><span class="badge badge-now">Em foco</span></h3>
+        <ul>
+          <li>Estabilização da API e documentação pública</li>
+          <li>Exemplos e guias de uso (README, docs)</li>
+          <li>Publicação e versionamento no npm</li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>🔵 Próximos passos</h2>
+
+    <h3>Curto prazo</h3>
+    <ul>
+      <li>Suporte a WebSockets no servidor HTTP</li>
+      <li>Middleware pipeline configurável (estilo Express)</li>
+      <li>Health check endpoint opcional no core</li>
+      <li>
+        Melhorias no sistema de versionamento (cache, retry, timeout
+        configurável)
+      </li>
+    </ul>
+
+    <h3>Médio prazo</h3>
+    <ul>
+      <li>CLI para scaffolding de projetos (<code>create-frani-app</code>)</li>
+      <li>Suporte a múltiplos ambientes (config por ambiente)</li>
+      <li>
+        Métricas e observabilidade (estrutura para métricas/OpenTelemetry)
+      </li>
+      <li>Documentação OpenAPI/Swagger gerada a partir dos controllers</li>
+    </ul>
+
+    <h3>Longo prazo</h3>
+    <ul>
+      <li>
+        Modo serverless / edge (adaptadores para Vercel, AWS Lambda, etc.)
+      </li>
+      <li>GraphQL como módulo opcional</li>
+      <li>Plugins oficiais (cache, rate limit, etc.)</li>
+      <li>Compatibilidade ESM além de CommonJS</li>
+    </ul>
+
+    <hr
+      style="
+        margin-top: 2rem;
+        border: none;
+        border-top: 1px solid var(--border);
+      "
+    />
+    <p style="color: var(--muted); font-size: 0.9rem">
+      Este roadmap é indicativo e pode ser ajustado conforme feedback e
+      prioridades. Contribuições e sugestões são bem-vindas.
+    </p>
+    <p style="color: var(--muted); font-size: 0.9rem">
+      <a href="README.html">Voltar à documentação</a>
+    </p>
+  </body>
+</html>
