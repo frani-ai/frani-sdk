@@ -39,11 +39,13 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.16",
-    "typescript-paths": "^1.5.1"
+    "typescript-paths": "^1.5.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "dependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/jsonwebtoken": "^9.0.10",
+    "axios": "^1.13.5",
+    "zod": "^3.23.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
     "jsonwebtoken": "^9.0.3",

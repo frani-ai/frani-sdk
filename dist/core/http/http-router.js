@@ -10,6 +10,31 @@ const url_1 = __importDefault(require("url"));
 const metadata_1 = require("../metadata");
 const http_exception_1 = require("./exceptions/http-exception");
 const container_1 = require("../di/container");
+/**
+ * Converte um path com :param em regex e lista de nomes.
+ * Ex: "/validate/:params" → { regex: /^\/validate\/([^/]+)$/, paramNames: ["params"] }
+ */
+function pathPatternToRegex(pathPattern) {
+  const paramNames = [];
+  const pattern = pathPattern.replace(/:([^/]+)/g, (_, name) => {
+    paramNames.push(name);
+    return "([^/]+)";
+  });
+  const regex = new RegExp(`^${pattern}$`);
+  return { regex, paramNames };
+}
+function matchPath(pathname, route) {
+  if (route.pathRegex && route.pathParamNames?.length) {
+    const m = pathname.match(route.pathRegex);
+    if (!m) return null;
+    const params = {};
+    route.pathParamNames.forEach((name, i) => {
+      params[name] = m[i + 1] ?? "";
+    });
+    return params;
+  }
+  return route.path === pathname ? {} : null;
+}
 class Router {
   constructor() {
     this.routes = [];
@@ -59,30 +84,49 @@ class Router {
       console.log(
         `   └─ ${route.method.padEnd(6)} ${fullPath} → ${route.handlerName}()${interceptor ? " [interceptor]" : ""}`,
       );
-      this.routes.push({
+      const hasPathParams = /:[^/]+/.test(fullPath);
+      const routeEntry = {
         method: route.method,
         path: fullPath,
         handler: controllerInstance[route.handlerName].bind(controllerInstance),
-        interceptor: interceptor
-          ? container_1.Container.resolve(interceptor)
-          : undefined,
         statusCode: statusCode ?? 200,
-      });
+      };
+      if (interceptor)
+        routeEntry.interceptor = container_1.Container.resolve(interceptor);
+      if (hasPathParams) {
+        const { regex, paramNames } = pathPatternToRegex(fullPath);
+        routeEntry.pathRegex = regex;
+        routeEntry.pathParamNames = paramNames;
+      }
+      this.routes.push(routeEntry);
     });
   }
   async handle(request, response) {
-    const parseUrl = url_1.default.parse(request.url, true);
-    const route = this.routes.find(
-      (route) =>
-        route.method === request.method && route.path === parseUrl.pathname,
-    );
+    const parseUrl = url_1.default.parse(request.url || "", true);
+    const pathname = parseUrl.pathname || "/";
+    const route = this.routes.find((r) => {
+      if (r.method !== request.method) return false;
+      const params = matchPath(pathname, r);
+      return params !== null;
+    });
     if (route) {
+      const pathParams = matchPath(pathname, route) || {};
       let body = "";
       request.on("data", (chunk) => (body += chunk));
       request.on("end", async () => {
         try {
           const json = body ? JSON.parse(body) : {};
-          const context = { request, response, body: json };
+          const context = {
+            request,
+            response,
+            body: json,
+            params: pathParams,
+            query: parseUrl.query,
+            headers: request.headers,
+            method: request.method ?? "",
+            url: request.url ?? "",
+            pathname: pathname ?? "/",
+          };
           // Execute global interceptor first
           if (this.globalInterceptor) {
             const canContinue = await this.globalInterceptor.intercept(context);
@@ -128,6 +172,12 @@ class Router {
             request,
             response,
             body: body ? JSON.parse(body) : {},
+            headers: request.headers,
+            method: request.method ?? "",
+            url: request.url ?? "",
+            pathname: pathname ?? "/",
+            query: parseUrl.query,
+            params: pathParams,
           });
         }
       });

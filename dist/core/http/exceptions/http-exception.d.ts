@@ -73,6 +73,30 @@ export declare class MisdirectedRequestException extends HttpException {
 export declare class UnprocessableEntityException extends HttpException {
   constructor(message?: string);
 }
+/** Exceção 422 com detalhes de validação (ex.: erros Zod) para uso em validateDTO */
+export declare class ValidationException extends UnprocessableEntityException {
+  readonly errors?:
+    | Array<{
+        path: (string | number)[];
+        message: string;
+      }>
+    | undefined;
+  constructor(
+    message?: string,
+    errors?:
+      | Array<{
+          path: (string | number)[];
+          message: string;
+        }>
+      | undefined,
+  );
+  toJSON(): ReturnType<UnprocessableEntityException["toJSON"]> & {
+    errors?: Array<{
+      path: (string | number)[];
+      message: string;
+    }>;
+  };
+}
 export declare class LockedException extends HttpException {
   constructor(message?: string);
 }

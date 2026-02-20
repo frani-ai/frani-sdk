@@ -36,6 +36,8 @@ __exportStar(require("./logger/logger.module"), exports);
 __exportStar(require("./logger/interfaces/logger"), exports);
 // Config
 __exportStar(require("./config"), exports);
+// Http Client (axios)
+__exportStar(require("./http-client"), exports);
 // Auth
 __exportStar(require("./auth"), exports);
 //# sourceMappingURL=index.js.map

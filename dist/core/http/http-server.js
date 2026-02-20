@@ -43,7 +43,14 @@ class HttpServer {
       const httpResponse = await this.router.handle(request, response);
       if (!httpResponse) {
         response.writeHead(404, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ error: "Not Found" }));
+        response.end(
+          JSON.stringify({
+            statusCode: 404,
+            error: "Not Found",
+            message: `Not Found path: ${request.url} method: ${request.method}`,
+            dateTime: new Date().toISOString(),
+          }),
+        );
       }
     });
     server.listen(this.port);

@@ -1,7 +1,5 @@
 import { Module } from "@core/di/container-decorator";
-import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { AuthModuleConfig } from "./auth-module.config";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { OAuthStrategy } from "./strategies/oauth.strategy";
 import { OpenIDStrategy } from "./strategies/openid.strategy";
@@ -12,8 +10,6 @@ import {
   IJwtConfig,
   IOAuthConfig,
   IOpenIDConfig,
-  OAuthUserResolver,
-  OpenIDUserResolver,
 } from "./interfaces/auth.interface";
 import { IDynamicModule } from "../config/interfaces/config.interface";
 import { Container } from "@core/di/container";
@@ -31,23 +27,11 @@ export interface IAuthModuleOptions {
   jwt?: IJwtConfig;
   oauth?: IOAuthConfig;
   openid?: IOpenIDConfig;
-
-  /**
-   * Callback após OAuth retornar dados do provedor.
-   * Seu backend resolve/encontra o usuário no seu sistema e retorna IAuthUser; o SDK gera o token.
-   */
-  onOAuthCallback?: OAuthUserResolver;
-
-  /**
-   * Callback após OpenID retornar dados do provedor.
-   * Seu backend resolve/encontra o usuário no seu sistema e retorna IAuthUser; o SDK gera o token.
-   */
-  onOpenIDCallback?: OpenIDUserResolver;
 }
 
 @Module({
   imports: [LoggerModule],
-  controllers: [AuthController],
+  controllers: [],
   providers: [],
 })
 export class AuthModule {
@@ -63,20 +47,8 @@ export class AuthModule {
     // Estratégias habilitadas (padrão: apenas JWT)
     const enabledStrategies = options?.strategies || ["jwt"];
 
-    // Config com callbacks OAuth/OpenID (seu backend resolve o usuário)
-    const authConfig = new AuthModuleConfig(
-      options?.onOAuthCallback,
-      options?.onOpenIDCallback,
-    );
-    Container.register(AuthModuleConfig, authConfig);
-
-    // Lista de providers dinâmicos
-    const providers: any[] = [
-      AuthService,
-      AuthModuleConfig,
-      JwtAuthGuard,
-      RolesGuard,
-    ];
+    // Lista de providers dinâmicos (apenas serviços; rotas ficam na sua aplicação)
+    const providers: any[] = [AuthService, JwtAuthGuard, RolesGuard];
     const exports: any[] = [AuthService, JwtAuthGuard, RolesGuard];
 
     // Criar e registrar apenas as estratégias habilitadas
@@ -106,7 +78,7 @@ export class AuthModule {
     dynamicModule.__dynamic = {
       module: AuthModule,
       imports: [LoggerModule],
-      controllers: [AuthController],
+      controllers: [],
       providers,
       exports,
     };

@@ -19,6 +19,7 @@ exports.NetworkAuthenticationRequiredException =
   exports.TooEarlyException =
   exports.FailedDependencyException =
   exports.LockedException =
+  exports.ValidationException =
   exports.UnprocessableEntityException =
   exports.MisdirectedRequestException =
   exports.ImATeapotException =
@@ -189,6 +190,19 @@ class UnprocessableEntityException extends HttpException {
   }
 }
 exports.UnprocessableEntityException = UnprocessableEntityException;
+/** Exceção 422 com detalhes de validação (ex.: erros Zod) para uso em validateDTO */
+class ValidationException extends UnprocessableEntityException {
+  constructor(message = "Validation failed", errors) {
+    super(message);
+    this.errors = errors;
+  }
+  toJSON() {
+    const base = super.toJSON();
+    if (this.errors?.length) return { ...base, errors: this.errors };
+    return base;
+  }
+}
+exports.ValidationException = ValidationException;
 class LockedException extends HttpException {
   constructor(message = "Locked") {
     super(message, 423, "Locked");

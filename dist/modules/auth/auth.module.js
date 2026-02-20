@@ -22,9 +22,7 @@ var AuthModule_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const container_decorator_1 = require("../../core/di/container-decorator");
-const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
-const auth_module_config_1 = require("./auth-module.config");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const oauth_strategy_1 = require("./strategies/oauth.strategy");
 const openid_strategy_1 = require("./strategies/openid.strategy");
@@ -43,19 +41,9 @@ let AuthModule = (AuthModule_1 = class AuthModule {
   static forRoot(options) {
     // Estratégias habilitadas (padrão: apenas JWT)
     const enabledStrategies = options?.strategies || ["jwt"];
-    // Config com callbacks OAuth/OpenID (seu backend resolve o usuário)
-    const authConfig = new auth_module_config_1.AuthModuleConfig(
-      options?.onOAuthCallback,
-      options?.onOpenIDCallback,
-    );
-    container_1.Container.register(
-      auth_module_config_1.AuthModuleConfig,
-      authConfig,
-    );
-    // Lista de providers dinâmicos
+    // Lista de providers dinâmicos (apenas serviços; rotas ficam na sua aplicação)
     const providers = [
       auth_service_1.AuthService,
-      auth_module_config_1.AuthModuleConfig,
       jwt_auth_guard_1.JwtAuthGuard,
       roles_guard_1.RolesGuard,
     ];
@@ -96,7 +84,7 @@ let AuthModule = (AuthModule_1 = class AuthModule {
     dynamicModule.__dynamic = {
       module: AuthModule_1,
       imports: [logger_module_1.LoggerModule],
-      controllers: [auth_controller_1.AuthController],
+      controllers: [],
       providers,
       exports,
     };
@@ -178,7 +166,7 @@ exports.AuthModule =
       [
         (0, container_decorator_1.Module)({
           imports: [logger_module_1.LoggerModule],
-          controllers: [auth_controller_1.AuthController],
+          controllers: [],
           providers: [],
         }),
       ],

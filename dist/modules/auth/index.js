@@ -35,7 +35,6 @@ exports.RolesGuard =
   exports.OpenIDStrategy =
   exports.OAuthStrategy =
   exports.JwtStrategy =
-  exports.AuthController =
   exports.AuthService =
   exports.AuthModule =
     void 0;
@@ -53,14 +52,6 @@ Object.defineProperty(exports, "AuthService", {
   enumerable: true,
   get: function () {
     return auth_service_1.AuthService;
-  },
-});
-// Controller
-var auth_controller_1 = require("./auth.controller");
-Object.defineProperty(exports, "AuthController", {
-  enumerable: true,
-  get: function () {
-    return auth_controller_1.AuthController;
   },
 });
 // Strategies

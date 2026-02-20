@@ -37,6 +37,7 @@ export {
   ImATeapotException,
   MisdirectedRequestException,
   UnprocessableEntityException,
+  ValidationException,
   LockedException,
   FailedDependencyException,
   TooEarlyException,

@@ -146,6 +146,27 @@ export class UnprocessableEntityException extends HttpException {
   }
 }
 
+/** Exceção 422 com detalhes de validação (ex.: erros Zod) para uso em validateDTO */
+export class ValidationException extends UnprocessableEntityException {
+  constructor(
+    message = "Validation failed",
+    public readonly errors?: Array<{
+      path: (string | number)[];
+      message: string;
+    }>,
+  ) {
+    super(message);
+  }
+
+  override toJSON(): ReturnType<UnprocessableEntityException["toJSON"]> & {
+    errors?: Array<{ path: (string | number)[]; message: string }>;
+  } {
+    const base = super.toJSON();
+    if (this.errors?.length) return { ...base, errors: this.errors };
+    return base;
+  }
+}
+
 export class LockedException extends HttpException {
   constructor(message = "Locked") {
     super(message, 423, "Locked");

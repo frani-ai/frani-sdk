@@ -1,5 +1,5 @@
-import "reflect-metadata"
-import "dotenv/config"
+import "reflect-metadata";
+import "dotenv/config";
 import http from "http";
 import { Router } from "./http-router";
 import { IInterceptor } from "./interfaces/interceptor.interface";
@@ -8,9 +8,7 @@ import { printBanner } from "@core/banner";
 import { getMetadata } from "@core/metadata";
 import { Container } from "@core/di/container";
 
-
 export class HttpServer {
-
   private port: number;
   private router: Router;
   private globalInterceptor?: IInterceptor;
@@ -19,7 +17,7 @@ export class HttpServer {
   constructor(port = 3000) {
     this.port = port;
     this.router = new Router();
-    printBanner(this.port)
+    printBanner(this.port);
   }
 
   /**
@@ -49,7 +47,14 @@ export class HttpServer {
       const httpResponse = await this.router.handle(request, response);
       if (!httpResponse) {
         response.writeHead(404, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ error: "Not Found" }));
+        response.end(
+          JSON.stringify({
+            statusCode: 404,
+            error: "Not Found",
+            message: `Not Found path: ${request.url} method: ${request.method}`,
+            dateTime: new Date().toISOString(),
+          }),
+        );
       }
     });
 
@@ -63,7 +68,9 @@ export class HttpServer {
     console.log(`\n📦 Registering module: ${moduleClass.name}`);
 
     if (meta.providers && meta.providers.length > 0) {
-      console.log(`   ├─ Providers: ${meta.providers.map((p: any) => p.name).join(', ')}`);
+      console.log(
+        `   ├─ Providers: ${meta.providers.map((p: any) => p.name).join(", ")}`,
+      );
     }
 
     meta.providers?.forEach((provider: any) => {
@@ -72,7 +79,9 @@ export class HttpServer {
     });
 
     if (meta.controllers && meta.controllers.length > 0) {
-      console.log(`   ├─ Controllers: ${meta.controllers.map((c: any) => c.name).join(', ')}`);
+      console.log(
+        `   ├─ Controllers: ${meta.controllers.map((c: any) => c.name).join(", ")}`,
+      );
     }
 
     meta.controllers?.forEach((ctrl: any) => {
@@ -81,7 +90,9 @@ export class HttpServer {
     });
 
     if (meta.imports && meta.imports.length > 0) {
-      console.log(`   └─ Imports: ${meta.imports.map((m: any) => m.name).join(', ')}`);
+      console.log(
+        `   └─ Imports: ${meta.imports.map((m: any) => m.name).join(", ")}`,
+      );
       meta.imports?.forEach((mod: any) => this.registerModule(mod));
     }
   }

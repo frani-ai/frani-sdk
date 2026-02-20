@@ -2,8 +2,6 @@ import {
   IJwtConfig,
   IOAuthConfig,
   IOpenIDConfig,
-  OAuthUserResolver,
-  OpenIDUserResolver,
 } from "./interfaces/auth.interface";
 import { IDynamicModule } from "../config/interfaces/config.interface";
 import { ConfigService } from "../config/config.service";
@@ -17,16 +15,6 @@ export interface IAuthModuleOptions {
   jwt?: IJwtConfig;
   oauth?: IOAuthConfig;
   openid?: IOpenIDConfig;
-  /**
-   * Callback após OAuth retornar dados do provedor.
-   * Seu backend resolve/encontra o usuário no seu sistema e retorna IAuthUser; o SDK gera o token.
-   */
-  onOAuthCallback?: OAuthUserResolver;
-  /**
-   * Callback após OpenID retornar dados do provedor.
-   * Seu backend resolve/encontra o usuário no seu sistema e retorna IAuthUser; o SDK gera o token.
-   */
-  onOpenIDCallback?: OpenIDUserResolver;
 }
 export declare class AuthModule {
   /**

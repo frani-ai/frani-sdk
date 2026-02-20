@@ -30,13 +30,17 @@ var __exportStar =
         __createBinding(exports, m, p);
   };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RolesGuard =
+exports.ValidationException =
+  exports.validateDTO =
+  exports.RolesGuard =
   exports.JwtAuthGuard =
   exports.OpenIDStrategy =
   exports.OAuthStrategy =
   exports.JwtStrategy =
   exports.AuthService =
   exports.AuthModule =
+  exports.HttpClientService =
+  exports.HttpClientModule =
   exports.ConfigService =
   exports.ConfigModule =
   exports.Logger =
@@ -176,6 +180,19 @@ Object.defineProperty(exports, "ConfigService", {
     return config_1.ConfigService;
   },
 });
+var http_client_1 = require("./modules/http-client");
+Object.defineProperty(exports, "HttpClientModule", {
+  enumerable: true,
+  get: function () {
+    return http_client_1.HttpClientModule;
+  },
+});
+Object.defineProperty(exports, "HttpClientService", {
+  enumerable: true,
+  get: function () {
+    return http_client_1.HttpClientService;
+  },
+});
 var auth_1 = require("./modules/auth");
 Object.defineProperty(exports, "AuthModule", {
   enumerable: true,
@@ -217,6 +234,20 @@ Object.defineProperty(exports, "RolesGuard", {
   enumerable: true,
   get: function () {
     return auth_1.RolesGuard;
+  },
+});
+var helpers_1 = require("./helpers");
+Object.defineProperty(exports, "validateDTO", {
+  enumerable: true,
+  get: function () {
+    return helpers_1.validateDTO;
+  },
+});
+var http_1 = require("./core/http");
+Object.defineProperty(exports, "ValidationException", {
+  enumerable: true,
+  get: function () {
+    return http_1.ValidationException;
   },
 });
 //# sourceMappingURL=index.js.map

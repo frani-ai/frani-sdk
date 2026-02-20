@@ -19,6 +19,7 @@ exports.NetworkAuthenticationRequiredException =
   exports.TooEarlyException =
   exports.FailedDependencyException =
   exports.LockedException =
+  exports.ValidationException =
   exports.UnprocessableEntityException =
   exports.MisdirectedRequestException =
   exports.ImATeapotException =
@@ -235,6 +236,12 @@ Object.defineProperty(exports, "UnprocessableEntityException", {
   enumerable: true,
   get: function () {
     return http_exception_1.UnprocessableEntityException;
+  },
+});
+Object.defineProperty(exports, "ValidationException", {
+  enumerable: true,
+  get: function () {
+    return http_exception_1.ValidationException;
   },
 });
 Object.defineProperty(exports, "LockedException", {

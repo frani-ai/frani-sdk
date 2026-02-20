@@ -16,6 +16,7 @@ export { Injectable, Module, Inject } from "./core/di/container-decorator";
 export { Container, DependencyContainer } from "./core/di/container";
 export { Logger } from "./modules/logger/logger.service";
 export { ConfigModule, ConfigService } from "./modules/config";
+export { HttpClientModule, HttpClientService } from "./modules/http-client";
 export {
   AuthModule,
   AuthService,
@@ -25,4 +26,6 @@ export {
   JwtAuthGuard,
   RolesGuard,
 } from "./modules/auth";
+export { validateDTO } from "./helpers";
+export { ValidationException } from "./core/http";
 //# sourceMappingURL=index.d.ts.map

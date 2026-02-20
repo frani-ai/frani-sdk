@@ -4,9 +4,6 @@ export { AuthModule } from "./auth.module";
 // Service
 export { AuthService } from "./auth.service";
 
-// Controller
-export { AuthController } from "./auth.controller";
-
 // Strategies
 export { JwtStrategy } from "./strategies/jwt.strategy";
 export { OAuthStrategy } from "./strategies/oauth.strategy";
