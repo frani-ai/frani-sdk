@@ -1,4 +1,5 @@
 import { CacheConnectionService } from "./cache-connection.service";
+import { CacheService } from "./cache.service";
 import { ICacheModuleOptions } from "./interfaces/cache.interface";
 import { Container, Module } from "@core/index";
 import { ConfigService } from "../config";
@@ -15,16 +16,18 @@ export class CacheModule {
     options?: ICacheModuleOptions,
   ): typeof CacheModule & { __dynamic: IDynamicModule } {
     const opts = options ?? {};
-    const service = new CacheConnectionService(opts);
-    Container.register(CacheConnectionService, service);
+    const connectionService = new CacheConnectionService(opts);
+    Container.register(CacheConnectionService, connectionService);
+    const cacheService = new CacheService(connectionService);
+    Container.register(CacheService, cacheService);
 
     const dynamicModule = CacheModule as typeof CacheModule & {
       __dynamic: IDynamicModule;
     };
     dynamicModule.__dynamic = {
       module: CacheModule,
-      providers: [CacheConnectionService],
-      exports: [CacheConnectionService],
+      providers: [CacheConnectionService, CacheService],
+      exports: [CacheConnectionService, CacheService],
     };
     return dynamicModule;
   }

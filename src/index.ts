@@ -32,6 +32,11 @@ export {
   JwtAuthGuard,
   RolesGuard,
 } from "./modules/auth";
-export { CacheModule, CacheConnectionService } from "./modules/cache";
+export {
+  CacheModule,
+  CacheConnectionService,
+  CacheService,
+  CacheTime,
+} from "./modules/cache";
 export { ValidationException } from "./core/http";
 export { MongooseModule, MongooseConnectionService } from "./modules/mongoose";
