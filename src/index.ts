@@ -22,6 +22,7 @@ export { Container, DependencyContainer } from "./core/di/container";
 export { Logger } from "./modules/logger/logger.service";
 export { ConfigModule, ConfigService } from "./modules/config";
 export { HttpClientModule, HttpClientService } from "./modules/http-client";
+export { validateDTO } from "./helpers";
 export {
   AuthModule,
   AuthService,
@@ -31,5 +32,11 @@ export {
   JwtAuthGuard,
   RolesGuard,
 } from "./modules/auth";
-export { validateDTO } from "./helpers";
+export {
+  CacheModule,
+  CacheConnectionService,
+  CacheService,
+  CacheTime,
+} from "./modules/cache";
 export { ValidationException } from "./core/http";
+export { MongooseModule, MongooseConnectionService } from "./modules/mongoose";
